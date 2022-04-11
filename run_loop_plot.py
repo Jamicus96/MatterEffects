@@ -87,7 +87,7 @@ Ne *= 1e6 #(cm^-3 to m^3)
 E = 1
 for i in range(N):
     #print(i)
-    os.system("./Matter_Oscillations {} {} {} 1".format(E, L[i], Ne))  #Input neutrino energy (MeV) and propagation length (km)
+    os.system("./Matter_Oscillations.exe {} {} {} 1".format(E, L[i], Ne))  #Input neutrino energy (MeV) and propagation length (km)
     #P_21[i] = Matt_Osc_m21(E, L[i], Ne)
     #P_31[i] = Matt_Osc_m31(E, L[i], Ne)
 
@@ -110,10 +110,10 @@ Pvacglobes = data[:,3]
 # L_31 = int((2*np.pi * E_eV * hbar * c)/(m31 * 1000))
 
 
-#plt.plot(L, Pvac, label='Vacuum Case (my calc)')
-plt.plot(L, P-Pvac, label='With Matter Effects (my calc)', linestyle='dashed')
-#plt.plot(L, Pvacglobes - Pvac, label='Vacuum Case (GLoBES)', linestyle='dashed')
-plt.plot(L, Pglobes-Pvacglobes, label='With Matter Effects (GLoBES)', linestyle='dashed')
+plt.plot(L, Pvac, label='Vacuum Case (my calc)')
+plt.plot(L, P, label='With Matter Effects (my calc)', linestyle='dashed')
+plt.plot(L, Pvacglobes, label='Vacuum Case (GLoBES)', linestyle='dashed')
+plt.plot(L, Pglobes, label='With Matter Effects (GLoBES)', linestyle='dashed')
 #plt.plot(L, P_21, label=r'$\Delta m_{21}^2(=7.53\times 10^{-5}$eV${}^2)$ dominance approximation')
 #plt.plot(L, P_31, label=r'$\Delta m_{31}^2(=2.53\times 10^{-3}$eV${}^2)$  dominance approximation')
 plt.xlabel("Baseline (km)")
