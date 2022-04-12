@@ -14,19 +14,18 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-using namespace std;
 #include <globes/globes.h>
 
 
 double Survival_Prob(double constants[4], double Ne, double E, double L, bool anti=true);
-double Survival_Prob_Vac(string filename, double E, double L);
+double Survival_Prob_Vac(std::string filename, double E, double L);
 double Survival_Prob_Globes(double Ne, double E, double L, bool anti=true);
 double Survival_Prob_Vac_Globes(double E, double L, bool anti=true);
 double Transition_Prob(double constants[8], double Ne, double E, double L, bool anti=true);
-double Transition_Prob_Vac(string filename, double E, double L, bool anti=true);
+double Transition_Prob_Vac(std::string filename, double E, double L, bool anti=true);
 double Transition_Prob_Globes(double Ne, double E, double L, bool anti=true);
 double Transition_Prob_Vac_Globes(double E, double L, bool anti=true);
-double* read_data(string filename, int num);
+double* read_data(std::string filename, int num);
 
 // Global variables
 double GF = 1.663788e-14; //(eV^-2)
@@ -41,7 +40,7 @@ int main(int argc, char *argv[]) {
     double transition_constants[8];
     for(int i=0; i<8; ++i){
         transition_constants[i] = *(constantsPoint + i);
-        // cout << "const_" << i << " = " << transition_constants[i] << endl;
+        // std::cout << "const_" << i << " = " << transition_constants[i] << std::endl;
         if (i < 4) {
             survival_constants[i] = *(constantsPoint + i);
         }
@@ -71,12 +70,12 @@ int main(int argc, char *argv[]) {
         P_vac_globes = Transition_Prob_Vac_Globes(E, L, true);
     }
     
-    // cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << endl;
+    // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
 
     // Print results to file
-    ofstream datafile;
+    std::ofstream datafile;
     datafile.open("results.txt", std::ios::app);
-    datafile << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << endl;
+    datafile << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
 
     return 0;
 }
@@ -90,13 +89,16 @@ int main(int argc, char *argv[]) {
  * @param num 
  * @return double*
  */
-double* read_data(string filename, int num) {
+double* read_data(std::string filename, int num) {
     //Create an input file stream
-	ifstream input(filename, ios::in);
+    std::ifstream infile(filename.c_str());
 
-	double* array = new double[num];
-	for(int i=0; i<num; ++i){
-        input >> array[i];
+    double* array = new double[num];
+    double a;
+    int i = 0;
+    while (infile >> a) {
+        array[i] = a;
+        ++i;
     }
     
     return array;
@@ -131,24 +133,24 @@ double Survival_Prob(double constants[4], double Ne, double E, double L, bool an
     double a0 = constants[2];
     double a1 = constants[3];
 
-    // cout << "H_ee = " << H << endl;
-    // cout << "Y_ee = " << Y << endl;
-    // cout << "a0 = " << a0 << endl;
-    // cout << "a1 = " << a1 << endl;
+    // std::cout << "H_ee = " << H << std::endl;
+    // std::cout << "Y_ee = " << Y << std::endl;
+    // std::cout << "a0 = " << a0 << std::endl;
+    // std::cout << "a1 = " << a1 << std::endl;
 
     // If not vacuum, make corrections
     if(Ne != 0.0){
         // convert units to eV
-        //cout << "Ne = " << Ne << endl;
+        //std::cout << "Ne = " << Ne << std::endl;
         Ne *= c*c*c * hbar*hbar*hbar; //(m^-3 to ev^3)
-        //cout << "Ne = " << Ne << endl;
+        //std::cout << "Ne = " << Ne << std::endl;
 
         // Work out ACC in (eV)^2
         double A_CC = 2 * sqrt(2) * E * GF * Ne;
         if(anti){
             A_CC *= -1;
         }
-        //cout << "A_CC = " << A_CC << endl;
+        //std::cout << "A_CC = " << A_CC << std::endl;
 
         // Compute new values for H_ee, Y, a0 and a1 (make sure and Y are updated after their use by others)
         double alpha_1 = -H * A_CC - (1.0/3.0) * A_CC*A_CC;
@@ -169,15 +171,15 @@ double Survival_Prob(double constants[4], double Ne, double E, double L, bool an
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-        //cout << "E_" << i << " = " << eigen[i] << endl;
+        //std::cout << "E_" << i << " = " << eigen[i] << std::endl;
 
         X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] + a1);
-        //cout << "X_" << i << " = " << X[i] << endl;
+        //std::cout << "X_" << i << " = " << X[i] << std::endl;
     }
 
-    // cout << "E_10 = " << eigen[1] - eigen[0] << endl;
-    // cout << "E_20 = " << eigen[2] - eigen[0] << endl;
-    // cout << "E_21 = " << eigen[2] - eigen[1] << endl;
+    // std::cout << "E_10 = " << eigen[1] - eigen[0] << std::endl;
+    // std::cout << "E_20 = " << eigen[2] - eigen[0] << std::endl;
+    // std::cout << "E_21 = " << eigen[2] - eigen[1] << std::endl;
 
     double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
     double s_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
@@ -199,7 +201,7 @@ double Survival_Prob(double constants[4], double Ne, double E, double L, bool an
  * @param L Propagation length (km).
  * @return double 
  */
-double Survival_Prob_Vac(string filename, double E, double L) {
+double Survival_Prob_Vac(std::string filename, double E, double L) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
     L *= 1e3 / (c * hbar); //(km to eV^-1)
@@ -279,7 +281,7 @@ double Survival_Prob_Globes(double Ne, double E, double L, bool anti) {
     if(anti){anitInt = -1;}
     Ne *= 1e-6; //(m^-3 to cm^3)
     double rho = Ne * 4.821e-15;  //matter density g/cm^3
-    //cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << endl;
+    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
     double P_globes = glbConstantDensityProbability(1, 1, anitInt, E, L, rho);
 
     return P_globes;
@@ -329,7 +331,7 @@ double Survival_Prob_Vac_Globes(double E, double L, bool anti) {
     // Run Globes function
     int anitInt = 1;
     if(anti){anitInt = -1;}
-    //cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << endl;
+    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
     double P_globes = glbVacuumProbability(1, 1, anitInt, E, L);
 
     return P_globes;
@@ -373,29 +375,29 @@ double Transition_Prob(double constants[8], double Ne, double E, double L, bool 
     double R_Y_em = constants[6];
     double I_Y_em = constants[7];
 
-    // cout << "H_ee = " << H_ee << endl;
-    // cout << "Y_ee = " << Y_ee << endl;
-    // cout << "a0 = " << a0 << endl;
-    // cout << "a1 = " << a1 << endl;
-    // cout << "R_H_em = " << R_H_em << endl;
-    // cout << "I_H_em = " << I_H_em << endl;
-    // cout << "R_Y_em = " << R_Y_em << endl;
-    // cout << "I_Y_em = " << I_Y_em << endl;
+    // std::cout << "H_ee = " << H_ee << std::endl;
+    // std::cout << "Y_ee = " << Y_ee << std::endl;
+    // std::cout << "a0 = " << a0 << std::endl;
+    // std::cout << "a1 = " << a1 << std::endl;
+    // std::cout << "R_H_em = " << R_H_em << std::endl;
+    // std::cout << "I_H_em = " << I_H_em << std::endl;
+    // std::cout << "R_Y_em = " << R_Y_em << std::endl;
+    // std::cout << "I_Y_em = " << I_Y_em << std::endl;
 
     // If not vacuum, make corrections
     double A_CC = 0.0;
     if(Ne != 0.0){
         // convert units to eV
-        //cout << "Ne = " << Ne << endl;
+        //std::cout << "Ne = " << Ne << std::endl;
         Ne *= c*c*c * hbar*hbar*hbar; //(m^-3 to ev^3)
-        //cout << "Ne = " << Ne << endl;
+        //std::cout << "Ne = " << Ne << std::endl;
 
         // Work out ACC in (eV)^2
         A_CC = 2 * sqrt(2) * E * GF * Ne;
         if(anti){
             A_CC *= -1;
         }
-        cout << "A_CC = " << A_CC << endl;
+        std::cout << "A_CC = " << A_CC << std::endl;
 
         // Compute new values for a0 and a1
         a0 += -Y_ee * A_CC - (1.0/3.0) * H_ee * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
@@ -413,24 +415,24 @@ double Transition_Prob(double constants[8], double Ne, double E, double L, bool 
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-        // cout << "E_" << i << " = " << eigen[i] << endl;
+        // std::cout << "E_" << i << " = " << eigen[i] << std::endl;
 
         R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
         I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
-        // cout << "X_" << i << " = " << R_X[i] << "+ i" << I_X[i] << endl;
+        // std::cout << "X_" << i << " = " << R_X[i] << "+ i" << I_X[i] << std::endl;
     }
 
-    // cout << "E_10 = " << eigen[1] - eigen[0] << endl;
-    // cout << "E_20 = " << eigen[2] - eigen[0] << endl;
-    // cout << "E_21 = " << eigen[2] - eigen[1] << endl;
+    // std::cout << "E_10 = " << eigen[1] - eigen[0] << std::endl;
+    // std::cout << "E_20 = " << eigen[2] - eigen[0] << std::endl;
+    // std::cout << "E_21 = " << eigen[2] - eigen[1] << std::endl;
 
     double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
     double Theta_20 = ((eigen[2] - eigen[0]) * L) / (2.0 * E);
     double Theta_21 = ((eigen[2] - eigen[1]) * L) / (2.0 * E);
 
-    // cout << "theta_10 = " << Theta_10 << endl;
-    // cout << "theta_20 = " << Theta_20 << endl;
-    // cout << "theta_21 = " << Theta_21 << endl;
+    // std::cout << "theta_10 = " << Theta_10 << std::endl;
+    // std::cout << "theta_20 = " << Theta_20 << std::endl;
+    // std::cout << "theta_21 = " << Theta_21 << std::endl;
 
     double s2_10 = sin(Theta_10 / 2.0);
     double s2_20 = sin(Theta_20 / 2.0);
@@ -468,7 +470,7 @@ double Transition_Prob(double constants[8], double Ne, double E, double L, bool 
  * @param L Propagation length (km).
  * @return double 
  */
-double Transition_Prob_Vac(string filename, double E, double L, bool anti) {
+double Transition_Prob_Vac(std::string filename, double E, double L, bool anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
     L *= 1e3 / (c * hbar); //(km to eV^-1)
@@ -482,7 +484,7 @@ double Transition_Prob_Vac(string filename, double E, double L, bool anti) {
             U_Re[i][j] = dataPoint[3*i + j];
             U_Im[i][j] = dataPoint[9 + 3*i + j];
 
-            // cout << "U_" << i << j << " = " << U_Re[i][j] << "+ i" << U_Im[i][j] << endl;
+            // std::cout << "U_" << i << j << " = " << U_Re[i][j] << "+ i" << U_Im[i][j] << std::endl;
         }
     }
     double U_em_Re[3];
@@ -490,16 +492,16 @@ double Transition_Prob_Vac(string filename, double E, double L, bool anti) {
     for (int k=0; k<3; ++k) {
         U_em_Re[k] =  U_Re[0][k] * U_Re[1][k] + U_Im[0][k] * U_Im[1][k];
         U_em_Im[k] =  U_Im[0][k] * U_Re[1][k] - U_Re[0][k] * U_Im[1][k];
-        // cout << "U_em_" << k+1 << " = " << U_em_Re[k] << "+ i" << U_em_Im[k] << endl;
+        // std::cout << "U_em_" << k+1 << " = " << U_em_Re[k] << "+ i" << U_em_Im[k] << std::endl;
     }
 
     double m21 = *(dataPoint + 18);
     double m31 = *(dataPoint + 19);
     double m32 = *(dataPoint + 20);
 
-    // cout << "m21 = " << m21 << endl;
-    // cout << "m31 = " << m31 << endl;
-    // cout << "m32 = " << m32 << endl;
+    // std::cout << "m21 = " << m21 << std::endl;
+    // std::cout << "m31 = " << m31 << std::endl;
+    // std::cout << "m32 = " << m32 << std::endl;
 
     // Compute survival probability
     double sin21_2 = sin((m21 * L) / (4.0 * E));
@@ -572,7 +574,7 @@ double Transition_Prob_Globes(double Ne, double E, double L, bool anti) {
     if(anti){anitInt = -1;}
     Ne *= 1e-6; //(m^-3 to cm^3)
     double rho = Ne * 4.821e-15;  //matter density g/cm^3
-    //cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << endl;
+    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
     double P_globes = glbConstantDensityProbability(2, 1, anitInt, E, L, rho);
 
     return P_globes;
@@ -623,7 +625,7 @@ double Transition_Prob_Vac_Globes(double E, double L, bool anti) {
     // Run Globes function
     int anitInt = 1;
     if(anti){anitInt = -1;}
-    //cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << endl;
+    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
     double P_globes = glbVacuumProbability(2, 1, anitInt, E, L);
 
     return P_globes;

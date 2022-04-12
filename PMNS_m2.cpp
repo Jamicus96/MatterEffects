@@ -13,16 +13,15 @@
 #include <cmath>
 #include <string>
 #include <fstream>
-using namespace std;
 #include "cplx.hpp"
 
 
-void PMNS(string filename, bool NO);
+void PMNS(std::string filename, bool NO);
 
 int main(){
     // create text file to store info
-    string filename = "PMNS_m2_data.txt";
-    ofstream datafile (filename);
+    std::string filename = "PMNS_m2_data.txt";
+    std::ofstream datafile(filename);
 
     // Add PMNS matrix values of interst, for a chosen ordering
     PMNS(filename, true);
@@ -38,7 +37,7 @@ int main(){
  * @param NO true = Normal Ordering, false = Inverted Ordering
  * @return int 
  */
-void PMNS(string filename, bool NO) {
+void PMNS(std::string filename, bool NO) {
     long double delta13 = 1.36 * M_PI;
     cplx phase1 = cplx::cplxPolar(1, -delta13);
     cplx phase2 = cplx::cplxPolar(1, delta13);
@@ -88,12 +87,12 @@ void PMNS(string filename, bool NO) {
                     U[i][j] += U23[i][k] * U13[k][l] * U12[l][j];
                 }
             }
-            cout << "U_" << i << j << " = " << U[i][j] << endl;
+            std::cout << "U_" << i << j << " = " << U[i][j] << std::endl;
         }
     }
 
     // Print components to file in a list, real and then imaginary parts.
-    ofstream datafile;
+    std::ofstream datafile;
     datafile.open(filename);
     for(int i=0; i<3; ++i){
         for(int j=0; j<3; ++j){

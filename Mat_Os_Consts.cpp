@@ -13,12 +13,11 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-using namespace std;
 //#include "cplx.hpp"
 
 
-void Survival_Prob_Constants(string filename, double data[20]);
-double* read_data(string filename, int num);
+void Survival_Prob_Constants(std::string filename, double data[20]);
+double* read_data(std::string filename, int num);
 double Real_Yem(double m21, double m31, double s12, double s13, double s23, double delta);
 double Im_Yem(double m21, double m31, double s12, double s13, double s23, double delta);
 
@@ -48,13 +47,16 @@ int main() {
  * @param num 
  * @return double*
  */
-double* read_data(string filename, int num) {
+double* read_data(std::string filename, int num) {
     //Create an input file stream
-	ifstream in(filename,ios::in);
+    std::ifstream infile(filename.c_str());
 
-	double* array = new double[num];
-	for(int i=0; i<num; ++i){
-        in >> array[i];
+    double* array = new double[num];
+    double a;
+    int i = 0;
+    while (infile >> a) {
+        array[i] = a;
+        ++i;
     }
     
     return array;
@@ -64,7 +66,7 @@ double* read_data(string filename, int num) {
 /* ------------------------------------------------------- */
 
 
-void Survival_Prob_Constants(string filename, double data[20]) {
+void Survival_Prob_Constants(std::string filename, double data[20]) {
     // Unpack data
     double U_Re[3][3];
     double U_Im[3][3];
@@ -73,18 +75,18 @@ void Survival_Prob_Constants(string filename, double data[20]) {
             U_Re[i][j] = data[3*i + j];
             U_Im[i][j] = data[9 + 3*i + j];
 
-            cout << "U_" << i << j << " = " << U_Re[i][j] << "+ i" << U_Im[i][j] << endl;
+            std::cout << "U_" << i << j << " = " << U_Re[i][j] << "+ i" << U_Im[i][j] << std::endl;
         }
     }
     for (int k=0; k<3; ++k) {
-        cout << "U_e" << k+1 << "U_mu" << k+1 << "^* = " << U_Re[0][k] * U_Re[1][k] + U_Im[0][k] * U_Im[1][k]
-            << " + i" << U_Im[0][k] * U_Re[1][k] - U_Re[0][k] * U_Im[1][k] << endl;
+        std::cout << "U_e" << k+1 << "U_mu" << k+1 << "^* = " << U_Re[0][k] * U_Re[1][k] + U_Im[0][k] * U_Im[1][k]
+            << " + i" << U_Im[0][k] * U_Re[1][k] - U_Re[0][k] * U_Im[1][k] << std::endl;
     }
     double m21 = data[18];
     double m31 = data[19];
 
-    cout << "m21 = " << m21 << endl;
-    cout << "m31 = " << m31 << endl;
+    std::cout << "m21 = " << m21 << std::endl;
+    std::cout << "m31 = " << m31 << std::endl;
 
     // Compute vacuum constants
     double a0 = - (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31);
@@ -108,12 +110,12 @@ void Survival_Prob_Constants(string filename, double data[20]) {
     double H_neq2 = c13*c13 * (m21*m21 * s12*s12 * (c12*c12 + s12*s12 * s13*s13) + m31*m31 * s13*s13
                     - 2.0 * m21 * m31 * s12*s12 * s13*s13);
 
-    cout << H_neq2 << endl;
+    std::cout << H_neq2 << std::endl;
 
     double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
 
     // Create new file, and print the needed constants to the file
-    ofstream datafile (filename);
+    std::ofstream datafile(filename);
     datafile << H_ee << "\n";
     datafile << Y_ee << "\n";
     datafile << a0 << "\n";
