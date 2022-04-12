@@ -115,7 +115,7 @@ void Survival_Prob_Constants(std::string filename, double data[20]) {
     double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
 
     // Create new file, and print the needed constants to the file
-    std::ofstream datafile(filename);
+    std::ofstream datafile(filename.c_str());
     datafile << H_ee << "\n";
     datafile << Y_ee << "\n";
     datafile << a0 << "\n";
