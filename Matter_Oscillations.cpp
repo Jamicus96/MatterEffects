@@ -14,6 +14,7 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include <cstdlib>
 #include <globes/globes.h>
 
 
