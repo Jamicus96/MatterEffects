@@ -21,7 +21,7 @@ void PMNS(std::string filename, bool NO);
 int main(){
     // create text file to store info
     std::string filename = "PMNS_m2_data.txt";
-    std::ofstream datafile(filename);
+    std::ofstream datafile(filename.c_str());
 
     // Add PMNS matrix values of interst, for a chosen ordering
     PMNS(filename, true);
