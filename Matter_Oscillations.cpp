@@ -411,7 +411,7 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
         double U_Im[3];
         for (int k=0; k<3; ++k) {
             U_Re[k] =  U_r.at(final_flavour).at(k) * U_r.at(init_flavour).at(k) + U_i.at(final_flavour).at(k) * U_i.at(init_flavour).at(k);
-            U_Im[k] =  U_i.at(final_flavour).at(k) * U_r.at(init_flavour).at(k) - U_r.at(final_flavourU_i.at(k) * U_i.at(init_flavour.at(k);
+            U_Im[k] =  U_i.at(final_flavour).at(k) * U_r.at(init_flavour).at(k) - U_r.at(final_flavour).at(k) * U_i.at(init_flavour).at(k);
         }
 
         // Compute probability
