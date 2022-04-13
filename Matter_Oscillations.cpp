@@ -168,7 +168,7 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
 
     // Unpack data in PMNS matrix (real and imginary parts)
     std::vector<std::vector<double> > U_r = U_PMNS.at(0);
-    std::vector<std::vector<double> > U_i = U_PMNS.at(i);
+    std::vector<std::vector<double> > U_i = U_PMNS.at(1);
 
     // Compute relevent matrix components
     double H_ee = 0.0;
@@ -366,7 +366,7 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
 
     // Unpack data in PMNS matrix (real and imginary parts)
     std::vector<std::vector<double> > U_r = U_PMNS.at(0);
-    std::vector<std::vector<double> > U_i = U_PMNS.at(i);
+    std::vector<std::vector<double> > U_i = U_PMNS.at(1);
 
     // Compute oscillation probability: different case for survival and transition
     double P;
@@ -383,7 +383,7 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
 
         double U_mag2[3];
         for(int i=0; i<3; ++i){
-            U_mag2[i] = U_r.at(init_flavour).at(i]*U_r.at(init_flavour).at(i] + U_i.at(init_flavour).at(i]*U_i.at(init_flavour).at(i];
+            U_mag2[i] = U_r.at(init_flavour).at(i)*U_r.at(init_flavour).at(i) + U_i.at(init_flavour).at(i)*U_i.at(init_flavour).at(i);
 
             // std::cout << "|U_" << init_flavour << i << "| = " <<  U_mag2[i] << std::endl;
         }
