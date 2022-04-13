@@ -42,12 +42,12 @@ int main(int argc, char *argv[]) {
     // Read in arguments
     double E = atof(argv[1]); // MeV
     double L_min = atof(argv[2]); // km
-    double L_max = atof(argv[2]); // km
-    int N = atof(argv[2]); // number of data points between L_min and L_max
-    double rho = atof(argv[3]); // g/cm^3
-    int init_flavour = atoi(argv[4]); // 0=e, 1=mu, 2=tau
-    int final_flavour = atoi(argv[5]); // 0=e, 1=mu, 2=tau
-    int anti = atoi(argv[6]); // -1 = antineutrino, 1 = neutrino
+    double L_max = atof(argv[3]); // km
+    int N = atof(argv[4]); // number of data points between L_min and L_max
+    double rho = atof(argv[5]); // g/cm^3
+    int init_flavour = atoi(argv[6]); // 0=e, 1=mu, 2=tau
+    int final_flavour = atoi(argv[7]); // 0=e, 1=mu, 2=tau
+    int anti = atoi(argv[8]); // -1 = antineutrino, 1 = neutrino
 
     // Read in calculated constants from files
     double* osc_consts = read_data("oscillation_constants.txt", 6);
