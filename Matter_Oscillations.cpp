@@ -46,7 +46,7 @@ double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
 
 int main(int argc, char *argv[]) {
     //test
-    std::cout << 1e3 / (c * hbar) << std:endl;
+    std::cout << 1e3 / (c * hbar) << std::endl;
 
     // Read in arguments
     double E = atof(argv[1]); // MeV
