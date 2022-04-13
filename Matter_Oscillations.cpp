@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     double m31 = osc_consts[5];
 
     // Initialse my algorithm with pre-loop constants
-    std::vector<double> consts = compute_constants(m21, m31, PMNS_values[18], init_flavour,final_flavour);
+    std::vector<double> consts = compute_constants(m21, m31, PMNS_values, init_flavour,final_flavour);
 
     // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     for (unsigned int i = 0; i < N+1; ++i) {
         L = i * L_step;
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
-        double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values[18], L, E, init_flavour, final_flavour, anti);
+        double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
         double P_globes = glbConstantDensityProbability(init_flavour, final_flavour, anti, E, L, rho);
         double P_vac_globes = glbVacuumProbability(init_flavour, final_flavour, anti, E, L);
 
@@ -161,17 +161,19 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
     double H_i = 0.0;
     double Y_r = 0.0;
     double Y_i = 0.0;
+    double mf1[3] = {0.0, m21, m31};
+    double mf1_2[3] = {2.0*m21*m31, m21*m21, m31*m31};
     for (unsigned int f = 0; f < 3; ++f) {
-        H_ee +=                 mf1.at(f) * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
-        Y_ee += (1.0/3.0) *     mf1_2.at(f) * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
-        H_r +=                  mf1.at(f) * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
-        Y_r += (1.0/3.0) *      mf1_2.at(f) * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
+        H_ee +=                 mf1[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
+        Y_ee += (1.0/3.0) *     mf1_2[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
+        H_r +=                  mf1[f] * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
+        Y_r += (1.0/3.0) *      mf1_2[f] * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
         if (init_flavour == final_flavour) {
-            H_r -= (1.0/3.0) *  mf1.at(f);
-            Y_r -= (1.0/9.0) *  mf1_2.at(f);
+            H_r -= (1.0/3.0) *  mf1[f];
+            Y_r -= (1.0/9.0) *  mf1_2[f];
         } else {
-            H_i +=              mf1.at(f) * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
-            Y_i += (1.0/3.0) *  mf1_3.at(f) * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+            H_i +=              mf1[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+            Y_i += (1.0/3.0) *  mf1_3[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
         }
     }
     vals.push_back(H_ee);   vals.push_back(Y_ee);   vals.push_back(H_r);
@@ -180,11 +182,11 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
     /* ---------------- */
 
     // Relevent components of matrix D (diagonal matrix)
-    std::vector<double> D = {2.0/3.0, -1.0/3.0, -1.0/3.0};
+    double D[3] = {2.0/3.0, -1.0/3.0, -1.0/3.0};
     if (init_flavour != final_flavour) {
         vals.push_back(0.0);
     } else {
-        vals.push_back(D.at(init_flavour));
+        vals.push_back(D[init_flavour]);
     }
 
     // Compute relevent T matrix component
@@ -251,7 +253,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
     double T_r = consts.at(9);
     double T_i = consts.at(10);
 
-    if (V != 0.0) {
+    if (rho != 0.0) {
         // Convert matter density (g/cm^3) to matter potential (eV): V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho
         // And: A_CC = +/- 2 * E * V
         double A_CC = anti * 2.0 * E * GLB_V_FACTOR * GLB_Ne_MANTLE * rho; // (eV^2)
@@ -275,7 +277,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double X[3];
         for(int i=0; i<3; ++i){
             eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-            X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] + a1);
+            X[i] = (1.0/3.0) + (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] + a1);
         }
 
         double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
@@ -292,8 +294,8 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double I_X[3];
         for(int i=0; i<3; ++i){
             eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-            R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
-            I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
+            R_X[i] = (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] + a1);
+            I_X[i] = (eigen[i] * H_i + Y_i) / (3.0 * eigen[i]*eigen[i] + a1);
         }
 
         double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
@@ -387,8 +389,8 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         double U_Re[3];
         double U_Im[3];
         for (int k=0; k<3; ++k) {
-            U_Re[k] =  U_Re[init_flavour][k] * U_Re[final_flavour][k] + U_Im[init_flavour][k] * U_Im[final_flavour][k];
-            U_Im[k] =  U_Im[init_flavour][k] * U_Re[final_flavour][k] - U_Re[init_flavour][k] * U_Im[final_flavour][k];
+            U_Re[k] =  U_r[init_flavour][k] * U_r[final_flavour][k] + U_i[init_flavour][k] * U_i[final_flavour][k];
+            U_Im[k] =  U_i[init_flavour][k] * U_r[final_flavour][k] - U_r[init_flavour][k] * U_i[final_flavour][k];
         }
 
         // Compute probability
