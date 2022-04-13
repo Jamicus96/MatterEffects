@@ -76,13 +76,13 @@ int main(int argc, char *argv[]) {
     datafile.open("results.txt", std::ios::app);
 
     // Compute oscillation probabilities via various methods, for various baselines
-    if (N <= 0) {
-        std::cout << "Number of datapoints N must be at least 1, not " << N << std::cout;
+    if (N < 0) {
+        std::cout << "Number of datapoints N must be at least 0, not " << N << std::cout;
     }
-    double L_step = (L_max - L_min) / N;
-    double L;
+    double L_step = 0.0;
+    if (N > 0) {L_step = (L_max - L_min) / N;}
+    double L = L_min;
     for (unsigned int i = 0; i < N+1; ++i) {
-        L = L_min + i * L_step;
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
         double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
         double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E, L, rho);
@@ -92,6 +92,8 @@ int main(int argc, char *argv[]) {
 
         // Print results to file
         datafile << E << " " << rho << " " << L << " " << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
+        // Step baseline forward
+        L += L_step;
     }
 
     return 0;
@@ -278,16 +280,16 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         for(int i=0; i<3; ++i){
             eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
             X[i] = (1.0/3.0) + (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] + a1);
-            std::cout << "(X_" << i << ")_" << init_flavour << final_flavour << " = " <<  X[i] << std::endl;
+            // std::cout << "(X_" << i << ")_" << init_flavour << final_flavour << " = " <<  X[i] << std::endl;
         }
 
         double s2_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
         double s2_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
         double s2_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
 
-        std::cout << "sin(((eigen[1] - eigen[0]) * L) / (4 * E)) = " << s2_10 << std::endl;
-        std::cout << "sin(((eigen[2] - eigen[0]) * L) / (4 * E)) = " << s2_20 << std::endl;
-        std::cout << "sin(((eigen[2] - eigen[1]) * L) / (4 * E)) = " << s2_21 << std::endl;
+        // std::cout << "sin(((eigen[1] - eigen[0]) * L) / (4 * E)) = " << s2_10 << std::endl;
+        // std::cout << "sin(((eigen[2] - eigen[0]) * L) / (4 * E)) = " << s2_20 << std::endl;
+        // std::cout << "sin(((eigen[2] - eigen[1]) * L) / (4 * E)) = " << s2_21 << std::endl;
 
         // Compute probability
         P = 1.0 - 4.0 * (X[1]*X[0]*s2_10*s2_10 + X[2]*X[0]*s2_20*s2_20 + X[2]*X[1]*s2_21*s2_21);
@@ -367,21 +369,21 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         double s2_31 = sin((m31 * L) / (4.0 * E));
         double s2_32 = sin((m32 * L) / (4.0 * E));
 
-        std::cout << "sin((m21 * L) / (4 * E)) = " << s2_21 << std::endl;
-        std::cout << "sin((m31 * L) / (4 * E)) = " << s2_31 << std::endl;
-        std::cout << "sin((m32 * L) / (4 * E)) = " << s2_32 << std::endl;
+        // std::cout << "sin((m21 * L) / (4 * E)) = " << s2_21 << std::endl;
+        // std::cout << "sin((m31 * L) / (4 * E)) = " << s2_31 << std::endl;
+        // std::cout << "sin((m32 * L) / (4 * E)) = " << s2_32 << std::endl;
 
         double U_mag2[3];
         for(int i=0; i<3; ++i){
             U_mag2[i] = U_r[init_flavour][i]*U_r[init_flavour][i] + U_i[init_flavour][i]*U_i[init_flavour][i];
 
-            std::cout << "|U_" << init_flavour << i << "| = " <<  U_mag2[i] << std::endl;
+            // std::cout << "|U_" << init_flavour << i << "| = " <<  U_mag2[i] << std::endl;
         }
 
         // Compute probability
-        double P = 1.0 - 4.0 * (U_mag2[1] * U_mag2[0] * s2_21*s2_21
-                              + U_mag2[2] * U_mag2[0] * s2_31*s2_31
-                              + U_mag2[2] * U_mag2[1] * s2_32*s2_32);
+        P = 1.0 - 4.0 * (U_mag2[1] * U_mag2[0] * s2_21*s2_21
+                       + U_mag2[2] * U_mag2[0] * s2_31*s2_31
+                       + U_mag2[2] * U_mag2[1] * s2_32*s2_32);
 
     } else {
 
@@ -405,12 +407,12 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         }
 
         // Compute probability
-        double P  =  - 4.0 * ((U_Re[1]*U_Re[0] + U_Im[1]*U_Im[0]) * s2_21*s2_21
-                            + (U_Re[2]*U_Re[0] + U_Im[2]*U_Im[0]) * s2_31*s2_31
-                            + (U_Re[2]*U_Re[1] + U_Im[2]*U_Im[1]) * s2_32*s2_32)
-              + anti * 2.0 * ((U_Im[1]*U_Re[0] - U_Re[1]*U_Im[0]) * s_21
-                            + (U_Im[2]*U_Re[0] - U_Re[2]*U_Im[0]) * s_31
-                            + (U_Im[2]*U_Re[1] - U_Re[2]*U_Im[1]) * s_32);
+        P  =       - 4.0 * ((U_Re[1]*U_Re[0] + U_Im[1]*U_Im[0]) * s2_21*s2_21
+                          + (U_Re[2]*U_Re[0] + U_Im[2]*U_Im[0]) * s2_31*s2_31
+                          + (U_Re[2]*U_Re[1] + U_Im[2]*U_Im[1]) * s2_32*s2_32)
+            + anti * 2.0 * ((U_Im[1]*U_Re[0] - U_Re[1]*U_Im[0]) * s_21
+                          + (U_Im[2]*U_Re[0] - U_Re[2]*U_Im[0]) * s_31
+                          + (U_Im[2]*U_Re[1] - U_Re[2]*U_Im[1]) * s_32);
 
     }
 
