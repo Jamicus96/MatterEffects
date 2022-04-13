@@ -39,10 +39,10 @@ def print_to_file(filename, info):
 
     # Write to file line by line
     if isinstance(info, list) or isinstance(info, np.ndarray):
-        for i in range(info):
-            f.write(info[i])
+        for i in range(len(info)):
+            f.write(str(info[i]) + '\n')
     else:
-        f.write(info)
+        f.write(str(info) + '\n')
 
 
 def calculate_PMNS():
@@ -125,14 +125,7 @@ def main():
     for i in range(3):
         for j in range(3):
             PMNS_elements.append(U_i[i][j])
-    print_to_file('PMNS_m2_data.txt', PMNS_elements)
-
-    # Compute constants needed for algorithm, outside of loop (delete file these are printed to first)
-    filename = 'Constants.txt'
-    file_exists = os.path.exists(filename)
-    if file_exists:
-        os.system('rm ' + filename)
-    os.system('./Mat_Os_Consts.exe')
+    print_to_file('PMNS.txt', PMNS_elements)
 
     ### Simulation parameters ###
     N = 500
@@ -142,14 +135,15 @@ def main():
     rho = 0.0  #g/cm^3
 
     # Run simulation
-    Compute_oscillations(L, E, rho, args.antinu)
+    # Compute_oscillations(L, E, rho, args.antinu)
 
     # Plot results, if desired
     if args.plot:
         plot_results(L, E, rho)
 
 
-
+if __name__ == '__main__':
+    main()
 
 
 #  Convert matter density to electron density using 

@@ -19,82 +19,80 @@
 #include <globes/globes.h>
 
 
-double Survival_Prob(double constants[4], double Ne, double E, double L, bool anti=true);
-double Survival_Prob_Vac(std::string filename, double E, double L);
-double Survival_Prob_Globes(double Ne, double E, double L, bool anti=true);
-double Survival_Prob_Vac_Globes(double E, double L, bool anti=true);
-double Transition_Prob(double constants[8], double Ne, double E, double L, bool anti=true);
-double Transition_Prob_Vac(std::string filename, double E, double L, bool anti=true);
-double Transition_Prob_Globes(double Ne, double E, double L, bool anti=true);
-double Transition_Prob_Vac_Globes(double E, double L, bool anti=true);
+double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
+                        int init_flavour, int final_flavour, int anti);
+double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], double L, double E,
+                            int init_flavour, int final_flavour, int anti);
+std::vector<double> compute_constants(double m21, double m31, double PMNS_values[18], int init_flavour,int final_flavour);
 double* read_data(std::string filename, int num);
 
-std::vector<std::vector<double>> compute_constants(double m21, double m31);
-std::vector<std::vector<std::vector<double>>> compute_vac_matrices(double PMNS_values[18], double m21, double m31);
-std::vector<std::vector<std::vector<double>>> compute_T_matrices(std::vector<std::vector<double>> H_r, std::vector<std::vector<double>> H_i);
 
 // Global variables
 double GF = 1.663788e-14;       // (eV^-2)
 double hbar = 6.58211957e-16;   // (eV.s)
 double c = 299792458;           // (m/s)
+// Convert matter density (g/cm^3) to matter potential (eV)
+// by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
+double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
+double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
 
 
 
 int main(int argc, char *argv[]) {
-    // Read in calculated constants
-    double* osc_consts = read_data("oscillation_constants.txt", 6);
-    double* PMNS_values = read_data("PMNS.txt", 18);
-
     // Read in arguments
     double E = atof(argv[1]); // MeV
-    double L = atof(argv[2]); // km
+    double L_min = atof(argv[2]); // km
+    double L_max = atof(argv[2]); // km
+    int N = atof(argv[2]); // number of data points between L_min and L_max
     double rho = atof(argv[3]); // g/cm^3
     int init_flavour = atoi(argv[4]); // 0=e, 1=mu, 2=tau
     int final_flavour = atoi(argv[5]); // 0=e, 1=mu, 2=tau
     int anti = atoi(argv[6]); // -1 = antineutrino, 1 = neutrino
 
-    // Convert matter density of matter potential (from GLOBES-3.0.11/src/glb_probability.h):
-    double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
-    double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
-    double V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho;  // Matter potential (eV)
+    // Read in calculated constants from files
+    double* osc_consts = read_data("oscillation_constants.txt", 6);
+    double* PMNS_values = read_data("PMNS.txt", 18);
 
-    // Initialse my algorithm with pre-loop constants
+    // Unpack osc_consts
+    double theta12 = osc_consts[0];
+    double theta13 = osc_consts[1];
+    double theta23 = osc_consts[2];
+    double delta = osc_consts[3];
     double m21 = osc_consts[4];
     double m31 = osc_consts[5];
-    std::vector<std::vector<double>> consts = compute_constants(m21, m31);
-    std::vector<double> a = consts.at(0);
-    std::vector<double> D = consts.at(1);
-    std::vector<std::vector<std::vector<double>>> vac_matrices = compute_vac_matrices(PMNS_values[18], m21, m31);
-    std::vector<std::vector<double>> H_r = vac_matrices.at(0);
-    std::vector<std::vector<double>> H_i = vac_matrices.at(1);
-    std::vector<std::vector<double>> Y_r = vac_matrices.at(2);
-    std::vector<std::vector<double>> Y_i = vac_matrices.at(3);
-    std::vector<std::vector<std::vector<double>>> T = compute_T_matrices(vac_matrices.at(0), vac_matrices.at(1));
 
-    double P;
-    double P_vac;
-    double P_globes;
-    double P_vac_globes;
+    // Initialse my algorithm with pre-loop constants
+    std::vector<double> consts = compute_constants(m21, m31, PMNS_values[18], init_flavour,final_flavour);
+
+    // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
+    glb_params true_values = glbAllocParams();
+    glbDefineParams(true_values, theta12, theta13, theta23, delta, m21, m31);
+    glbSetOscillationParameters(true_values);
+    glbSetRates();
 
-    if (type == 0) {
-        P = Survival_Prob(survival_constants, Ne, E, L, true);
-        P_vac = Survival_Prob_Vac("PMNS_m2_data.txt", E, L);
-        P_globes = Survival_Prob_Globes(Ne, E, L, true);
-        P_vac_globes = Survival_Prob_Vac_Globes(E, L, true);
-    } else if (type == 1) {
-        P = Transition_Prob(transition_constants, Ne, E, L, true);
-        P_vac = Transition_Prob_Vac("PMNS_m2_data.txt", E, L, true);
-        P_globes = Transition_Prob_Globes(Ne, E, L, true);
-        P_vac_globes = Transition_Prob_Vac_Globes(E, L, true);
-    }
-    
-    // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
-
-    // Print results to file
+    // Open file to print results to
     std::ofstream datafile;
     datafile.open("results.txt", std::ios::app);
-    datafile << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
+
+    // Compute oscillation probabilities via various methods, for various baselines
+    if (N <= 0) {
+        std::cout << "Number of datapoints N must be at least 1, not " << N << std::cout;
+    }
+    double L_step = (L_max - L_min) / N;
+    double L;
+    for (unsigned int i = 0; i < N+1; ++i) {
+        L = i * L_step;
+        double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
+        double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values[18], L, E, init_flavour, final_flavour, anti);
+        double P_globes = glbConstantDensityProbability(init_flavour, final_flavour, anti, E, L, rho);
+        double P_vac_globes = glbVacuumProbability(init_flavour, final_flavour, anti, E, L);
+
+        // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
+
+        // Print results to file
+        datafile << E << " " << rho << " " << L << " " << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
+    }
 
     return 0;
 }
@@ -212,547 +210,196 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
 }
 
 
-/* -------------------- SURVIVAL PROBS ----------------------- */
+/* -------------------- OSCILLATION PROBS ----------------------- */
 
-double Oscillation_Prob(std::vector<std::vector<double>> consts, std::vector<std::vector<std::vector<double>>> vac_matrices,
-                        std::vector<std::vector<std::vector<double>>> T, double L, double E, double V,
-                        int init_flavour,int final_flavour, int anti) {
 
-    // Unpack constants
-    std::vector<double> a = consts.at(0);
-    std::vector<double> D = consts.at(1);
-    std::vector<std::vector<double>> H_r = vac_matrices.at(0);
-    std::vector<std::vector<double>> H_i = vac_matrices.at(1);
-    std::vector<std::vector<double>> Y_r = vac_matrices.at(2);
-    std::vector<std::vector<double>> Y_i = vac_matrices.at(3);
-    std::vector<std::vector<double>> T_r = T.at(0);
-    std::vector<std::vector<double>> T_i = T.at(1);
+/**
+ * @brief Compute oscillation probability with my algorithm.
+ * 
+ * @param consts Pre-computed constants (only depend on oscillation parameters and particular flavour transition).
+ * @param L Baseline (km)
+ * @param E (anti)neutrino energy (MeV)
+ * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
+ * @param init_flavour Initial neutrino flavour (0=e, 1=mu, 2=tau).
+ * @param final_flavour Final neutrino flavour (0=e, 1=mu, 2=tau).
+ * @param anti 1=neutrino, -1=antineutrino.
+ * @return double 
+ */
+double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
+                        int init_flavour, int final_flavour, int anti) {
+
+    // Check anti value
+    if (anti != 1 && anti != -1) {
+        std::cout << "anti should be 1 or -1, not " << anti << std::endl;
+        exit(1);
+    }
+
+    // convert units to eV
+    E *= 1e6; //(MeV to eV)
+    L *= 1e3 / (c * hbar); //(km to eV^-1)
+
+    // Unpack constants {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
+    double a0 = consts.at(0);
+    double a1 = consts.at(1);
+    double H_ee = consts.at(2);
+    double Y_ee = consts.at(3);
+    double H_r = consts.at(4);
+    double H_i = consts.at(5);
+    double Y_r = consts.at(6);
+    double Y_i = consts.at(7);
+    double D = consts.at(8);
+    double T_r = consts.at(9);
+    double T_i = consts.at(10);
 
     if (V != 0.0) {
-        Y_r.at(final_flavour).at(init_flavour)
-    }
-}
+        // Convert matter density (g/cm^3) to matter potential (eV): V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho
+        // And: A_CC = +/- 2 * E * V
+        double A_CC = anti * 2.0 * E * GLB_V_FACTOR * GLB_Ne_MANTLE * rho; // (eV^2)
 
-
-/**
- * @brief Compute survival probability of (anti)electron neutrinos, with matter effects.
- * 
- * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
- *   constants[0] << H_ee_vac,
- *   constants[1] << Y_vac,
- *   constants[2] << a0_vac,
- *   constants[3] << a1_vac,
- * @param Ne Matter electron density (m^-3).
- * @param E Neutrino energy (MeV).
- * @param L Propagation length (km).
- * @param anti true=antineutrino, false=neutrino.
- * @return double 
- */
-double Survival_Prob(double constants[4], double Ne, double E, double L, bool anti) {
-    // convert units to eV
-    E *= 1e6; //(MeV to eV)
-    L *= 1e3 / (c * hbar); //(km to eV^-1)
-
-    // Initialise constants with vacuum values
-    double H = constants[0];
-    double Y = constants[1];
-    double a0 = constants[2];
-    double a1 = constants[3];
-
-    // std::cout << "H_ee = " << H << std::endl;
-    // std::cout << "Y_ee = " << Y << std::endl;
-    // std::cout << "a0 = " << a0 << std::endl;
-    // std::cout << "a1 = " << a1 << std::endl;
-
-    // If not vacuum, make corrections
-    if(Ne != 0.0){
-        // convert units to eV
-        //std::cout << "Ne = " << Ne << std::endl;
-        Ne *= c*c*c * hbar*hbar*hbar; //(m^-3 to ev^3)
-        //std::cout << "Ne = " << Ne << std::endl;
-
-        // Work out ACC in (eV)^2
-        double A_CC = 2 * sqrt(2) * E * GF * Ne;
-        if(anti){
-            A_CC *= -1;
-        }
-        //std::cout << "A_CC = " << A_CC << std::endl;
-
-        // Compute new values for H_ee, Y, a0 and a1 (make sure and Y are updated after their use by others)
-        double alpha_1 = -H * A_CC - (1.0/3.0) * A_CC*A_CC;
-
-        a0 += -Y * A_CC - (1.0/3.0) * H * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
-        a1 += -H * A_CC - (1.0/3.0) * A_CC*A_CC;
-        Y -= (2.0/3.0) * alpha_1;
-        H += (2.0/3.0) * A_CC;
-    }
-
-
-    // Get eigenvalues of H, and constants X and theta
-    double eigen[3];
-    double X[3];
-
-    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(- 3.0 / a1));
-    double preFact = 2.0 * sqrt(- a1 / 3.0);
-
-    for(int i=0; i<3; ++i){
-        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-        //std::cout << "E_" << i << " = " << eigen[i] << std::endl;
-
-        X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] + a1);
-        //std::cout << "X_" << i << " = " << X[i] << std::endl;
-    }
-
-    // std::cout << "E_10 = " << eigen[1] - eigen[0] << std::endl;
-    // std::cout << "E_20 = " << eigen[2] - eigen[0] << std::endl;
-    // std::cout << "E_21 = " << eigen[2] - eigen[1] << std::endl;
-
-    double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
-    double s_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
-    double s_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
-
-
-    // Compute probability
-    double P = 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
-
-    return P;
-}
-
-
-/**
- * @brief Survival Probability in a Vacuum (standard calc).
- * 
- * @param filename for PMNS matrix elements and mass differences.
- * @param E Neutrino energy (MeV).
- * @param L Propagation length (km).
- * @return double 
- */
-double Survival_Prob_Vac(std::string filename, double E, double L) {
-    // convert all units to eV
-    E *= 1e6; //(MeV to eV)
-    L *= 1e3 / (c * hbar); //(km to eV^-1)
-
-    // Read in elements of the top line of the PMNS matrix and mass differences
-    double* dataPoint = read_data(filename, 21);
-    double U_Re;
-    double U_Im;
-    double U_mag2[3];
-    for(int i=0; i<3; ++i){
-        U_Re = *(dataPoint + i);
-        U_Im = *(dataPoint + 9 + i);
-        U_mag2[i] = U_Re*U_Re + U_Im*U_Im;
-    }
-
-    double m21 = *(dataPoint + 18);
-    double m31 = *(dataPoint + 19);
-    double m32 = *(dataPoint + 20);
-
-    // Compute survival probability
-    double sin21 = sin((m21 * L) / (4.0 * E));
-    double sin31 = sin((m31 * L) / (4.0 * E));
-    double sin32 = sin((m32 * L) / (4.0 * E));
-
-    double P = 1.0 - 4.0 * (U_mag2[1] * U_mag2[0] * sin21*sin21
-                                + U_mag2[2] * U_mag2[0] * sin31*sin31
-                                + U_mag2[2] * U_mag2[1] * sin32*sin32);
-
-    return P;
-}
-
-
-/**
- * @brief Survival probability compted by Globes package
- * 
- * @param Ne Electron density (is converted to matter density before being passed to globes function)
- * @param E Neutrino energy
- * @param L Baseline
- * @param anti Is it an antineutrino?
- * @return double 
- */
-double Survival_Prob_Globes(double Ne, double E, double L, bool anti) {
-    // convert units to eV
-    E /= 1e3; //(MeV to GeV)
-
-    // Input parameters
-    double delta13 = 1.36 * M_PI;
-
-    double s12 = sqrt(0.297);
-    double s13 = sqrt(0.0215);
-    double s23 = sqrt(0.545);
-
-    double theta12 = asin(s12);
-    double theta13 = asin(s13);
-    double theta23 = asin(s23);
-
-    // Define mass differences
-    double m21 = 7.53e-5; //(Delta m_21^2, in eV^2)
-    double m31 = 0.0025283; //(Delta m_31^2, in eV^2)
-    double m32 = m31 - m21; //(Delta m_32^2, in eV^2)
-
-    // Initialise Globes stuff
-    // char* exp_file = (char *)"/home/jamicus/Studies/PhD/Antinu/Matter_Effects/Globes/globes-3.0.11/examples/NFstandard.glb";
-    /* Initialize experiment NFstandard.glb */
-    // glbInitExperiment(exp_file, &glb_experiment_list[0], &glb_num_of_exps);
-    /* Initialize parameter vector(s) */
-    glb_params true_values = glbAllocParams();
-    /* Assign: theta12,theta13,theta23,deltacp,dm2solar,dm2atm */
-    glbDefineParams(true_values, theta12, theta13, theta23, delta13, m21, m31);
-    //glbSetDensityParams(true_values,1.0,GLB_ALL); // Matter scaling
-    /* The simulated data are computed */
-    glbSetOscillationParameters(true_values);
-    glbSetRates();
-
-    // Run Globes function
-    int anitInt = 1;
-    if(anti){anitInt = -1;}
-    Ne *= 1e-6; //(m^-3 to cm^3)
-    double rho = Ne * 4.821e-15;  //matter density g/cm^3
-    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
-    double P_globes = glbConstantDensityProbability(1, 1, anitInt, E, L, rho);
-
-    return P_globes;
-}
-
-/**
- * @brief Survival probability in vacuum compted by Globes package
- * 
- * @param E Neutrino energy
- * @param L Baseline
- * @param anti Is it an antineutrino?
- * @return double 
- */
-double Survival_Prob_Vac_Globes(double E, double L, bool anti) {
-    // convert units to eV
-    E /= 1e3; //(MeV to GeV)
-
-    // Input parameters
-    double delta13 = 1.36 * M_PI;
-
-    double s12 = sqrt(0.297);
-    double s13 = sqrt(0.0215);
-    double s23 = sqrt(0.545);
-
-    double theta12 = asin(s12);
-    double theta13 = asin(s13);
-    double theta23 = asin(s23);
-
-    // Define mass differences
-    double m21 = 7.53e-5; //(Delta m_21^2, in eV^2)
-    double m31 = 0.0025283; //(Delta m_31^2, in eV^2)
-    double m32 = m31 - m21; //(Delta m_32^2, in eV^2)
-
-    // Initialise Globes stuff
-    // char* exp_file = (char *)"/home/jamicus/Studies/PhD/Antinu/Matter_Effects/Globes/globes-3.0.11/examples/NFstandard.glb";
-    /* Initialize experiment NFstandard.glb */
-    // glbInitExperiment(exp_file, &glb_experiment_list[0], &glb_num_of_exps);
-    /* Initialize parameter vector(s) */
-    glb_params true_values = glbAllocParams();
-    /* Assign: theta12,theta13,theta23,deltacp,dm2solar,dm2atm */
-    glbDefineParams(true_values, theta12, theta13, theta23, delta13, m21, m31);
-    //glbSetDensityParams(true_values,1.0,GLB_ALL); // Matter scaling
-    /* The simulated data are computed */
-    glbSetOscillationParameters(true_values);
-    glbSetRates();
-
-    // Run Globes function
-    int anitInt = 1;
-    if(anti){anitInt = -1;}
-    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
-    double P_globes = glbVacuumProbability(1, 1, anitInt, E, L);
-
-    return P_globes;
-}
-
-
-/* -------------------- TRANSITION PROBS ----------------------- */
-
-
-/**
- * @brief Compute transition probability of (anti)muon neutrinos to (anti)electron neutrinos,
- * with matter effects.
- * 
- * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
- *   constants[0] << H_ee_vac,
- *   constants[1] << Y_vac,
- *   constants[2] << a0_vac,
- *   constants[3] << a1_vac,
- *   constants[4] << R_H_em,
- *   constants[5] << I_H_em,
- *   constants[6] << R_Y_em,
- *   constants[7] << I_Y_em,
- * @param Ne Matter electron density (m^-3).
- * @param E Neutrino energy (MeV).
- * @param L Propagation length (km).
- * @param anti true=antineutrino, false=neutrino.
- * @return double 
- */
-double Transition_Prob(double constants[8], double Ne, double E, double L, bool anti) {
-    // convert units to eV
-    E *= 1e6; //(MeV to eV)
-    L *= 1e3 / (c * hbar); //(km to eV^-1)
-
-    // Initialise constants with vacuum values
-    double H_ee = constants[0];
-    double Y_ee = constants[1];
-    double a0 = constants[2];
-    double a1 = constants[3];
-    double R_H_em = constants[4];
-    double I_H_em = constants[5];
-    double R_Y_em = constants[6];
-    double I_Y_em = constants[7];
-
-    // std::cout << "H_ee = " << H_ee << std::endl;
-    // std::cout << "Y_ee = " << Y_ee << std::endl;
-    // std::cout << "a0 = " << a0 << std::endl;
-    // std::cout << "a1 = " << a1 << std::endl;
-    // std::cout << "R_H_em = " << R_H_em << std::endl;
-    // std::cout << "I_H_em = " << I_H_em << std::endl;
-    // std::cout << "R_Y_em = " << R_Y_em << std::endl;
-    // std::cout << "I_Y_em = " << I_Y_em << std::endl;
-
-    // If not vacuum, make corrections
-    double A_CC = 0.0;
-    if(Ne != 0.0){
-        // convert units to eV
-        //std::cout << "Ne = " << Ne << std::endl;
-        Ne *= c*c*c * hbar*hbar*hbar; //(m^-3 to ev^3)
-        //std::cout << "Ne = " << Ne << std::endl;
-
-        // Work out ACC in (eV)^2
-        A_CC = 2 * sqrt(2) * E * GF * Ne;
-        if(anti){
-            A_CC *= -1;
-        }
-        std::cout << "A_CC = " << A_CC << std::endl;
-
-        // Compute new values for a0 and a1
+        // Correct constants for matter effects (D = 0 for transition prob)
         a0 += -Y_ee * A_CC - (1.0/3.0) * H_ee * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
         a1 += -H_ee * A_CC - (1.0/3.0) * A_CC*A_CC;
+        Y_r += A_CC * T_r + (1.0/3.0) * A_CC*A_CC * D;
+        Y_i += A_CC * T_i;
+        H_r += A_CC * D;
     }
 
-
-    // Get eigenvalues of H, and constants X and theta
-    double eigen[3];
-    double R_X[3];
-    double I_X[3];
-
+    // Different cases for survival and transition probabilities
+    double P;
     double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(- 3.0 / a1));
     double preFact = 2.0 * sqrt(- a1 / 3.0);
 
-    for(int i=0; i<3; ++i){
-        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-        // std::cout << "E_" << i << " = " << eigen[i] << std::endl;
+    if (init_flavour == final_flavour) {
+        // Get eigenvalues of H, and constants X
+        double eigen[3];
+        double X[3];
+        for(int i=0; i<3; ++i){
+            eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+            X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] + a1);
+        }
 
-        R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
-        I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
-        // std::cout << "X_" << i << " = " << R_X[i] << "+ i" << I_X[i] << std::endl;
+        double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
+        double s_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
+        double s_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
+
+        // Compute probability
+        P = 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
+
+    } else {
+        // Get eigenvalues of H, and constants X
+        double eigen[3];
+        double R_X[3];
+        double I_X[3];
+        for(int i=0; i<3; ++i){
+            eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+            R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
+            I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
+        }
+
+        double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
+        double Theta_20 = ((eigen[2] - eigen[0]) * L) / (2.0 * E);
+        double Theta_21 = ((eigen[2] - eigen[1]) * L) / (2.0 * E);
+
+        double s2_10 = sin(Theta_10 / 2.0);
+        double s2_20 = sin(Theta_20 / 2.0);
+        double s2_21 = sin(Theta_21 / 2.0);
+        double s_10 = sin(Theta_10);
+        double s_20 = sin(Theta_20);
+        double s_21 = sin(Theta_21);
+
+        // Compute probability
+        P  =        - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
+                           + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
+                           + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
+             + anti * 2.0 * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
+                           + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
+                           + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21);
+
     }
-
-    // std::cout << "E_10 = " << eigen[1] - eigen[0] << std::endl;
-    // std::cout << "E_20 = " << eigen[2] - eigen[0] << std::endl;
-    // std::cout << "E_21 = " << eigen[2] - eigen[1] << std::endl;
-
-    double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
-    double Theta_20 = ((eigen[2] - eigen[0]) * L) / (2.0 * E);
-    double Theta_21 = ((eigen[2] - eigen[1]) * L) / (2.0 * E);
-
-    // std::cout << "theta_10 = " << Theta_10 << std::endl;
-    // std::cout << "theta_20 = " << Theta_20 << std::endl;
-    // std::cout << "theta_21 = " << Theta_21 << std::endl;
-
-    double s2_10 = sin(Theta_10 / 2.0);
-    double s2_20 = sin(Theta_20 / 2.0);
-    double s2_21 = sin(Theta_21 / 2.0);
-    double s_10 = sin(Theta_10);
-    double s_20 = sin(Theta_20);
-    double s_21 = sin(Theta_21);
-
-    // temp test
-    // R_X[2] = -0.272838; I_X[2] = -0.0681112;
-    // R_X[1] = 0.31843; I_X[1] = -0.0287753;
-    // R_X[0] = -0.0455914; I_X[0] = 0.0968868;
-
-    double anitInt = 1.0;
-    if(anti){anitInt = -1.0;}
-
-    // Compute probability
-    double P  =  - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
-                        + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
-                        + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
-        + anitInt * 2.0 * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
-                        + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
-                        + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21);
 
     return P;
 }
 
 
 /**
- * @brief Transition Probability of (anti)muon neutrinos to (anti)electron neutrinos,
- * in a Vacuum (standard calc).
+ * @brief Vacuum oscillation calculation (standard, using PMNS matric elements).
  * 
- * @param filename for PMNS matrix elements and mass differences.
- * @param E Neutrino energy (MeV).
- * @param L Propagation length (km).
+ * @param m21 Mass difference (eV^2).
+ * @param m31 Mass difference (eV^2).
+ * @param PMNS_values Vector containing PMNS matrix elements.
+ * @param L 
+ * @param E 
+ * @param init_flavour Initial neutrino flavour (0=e, 1=mu, 2=tau).
+ * @param final_flavour Final neutrino flavour (0=e, 1=mu, 2=tau).
+ * @param anti 1=neutrino, -1=antineutrino.
  * @return double 
  */
-double Transition_Prob_Vac(std::string filename, double E, double L, bool anti) {
+double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], double L, double E,
+                            int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
     L *= 1e3 / (c * hbar); //(km to eV^-1)
 
-    // Read in elements of the top line of the PMNS matrix and mass differences
-    double* dataPoint = read_data(filename, 21);
-    double U_Re[2][3];
-    double U_Im[2][3];
-    for (int i=0; i<2; ++i) {
-        for (int j=0; j<3; ++j) {
-            U_Re[i][j] = dataPoint[3*i + j];
-            U_Im[i][j] = dataPoint[9 + 3*i + j];
 
-            // std::cout << "U_" << i << j << " = " << U_Re[i][j] << "+ i" << U_Im[i][j] << std::endl;
+    // Unpack data in PMNS matrix (real and imginary parts)
+    double U_r[3][3];
+    double U_i[3][3];
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+            U_r[i][j] = PMNS_values[3 * i + j];
+            U_i[i][j] = PMNS_values[3 * i + j + 9];
         }
     }
-    double U_em_Re[3];
-    double U_em_Im[3];
-    for (int k=0; k<3; ++k) {
-        U_em_Re[k] =  U_Re[0][k] * U_Re[1][k] + U_Im[0][k] * U_Im[1][k];
-        U_em_Im[k] =  U_Im[0][k] * U_Re[1][k] - U_Re[0][k] * U_Im[1][k];
-        // std::cout << "U_em_" << k+1 << " = " << U_em_Re[k] << "+ i" << U_em_Im[k] << std::endl;
+
+    // Compute oscillation probability: different case for survival and transition
+    double P;
+    double m32 = m31 - m21;
+
+    if (init_flavour == final_flavour) {
+        double s2_21 = sin((m21 * L) / (4.0 * E));
+        double s2_31 = sin((m31 * L) / (4.0 * E));
+        double s2_32 = sin((m32 * L) / (4.0 * E));
+
+        double U_mag2[3];
+        for(int i=0; i<3; ++i){
+            U_mag2[i] = U_r[init_flavour][i]*U_r[init_flavour][i] + U_i[init_flavour][i]*U_i[init_flavour][i];
+        }
+
+        // Compute probability
+        double P = 1.0 - 4.0 * (U_mag2[1] * U_mag2[0] * s2_21*s2_21
+                              + U_mag2[2] * U_mag2[0] * s2_31*s2_31
+                              + U_mag2[2] * U_mag2[1] * s2_32*s2_32);
+
+    } else {
+
+        double Theta_21 = (m21 * L) / (2.0 * E);
+        double Theta_31 = (m31 * L) / (2.0 * E);
+        double Theta_32 = (m32 * L) / (2.0 * E);
+
+        double s2_21 = sin(Theta_21 / 2.0);
+        double s2_31 = sin(Theta_31 / 2.0);
+        double s2_32 = sin(Theta_32 / 2.0);
+        double s_21 = sin(Theta_21);
+        double s_31 = sin(Theta_31);
+        double s_32 = sin(Theta_32);
+
+        // Get relevent PMNS matrix element products
+        double U_Re[3];
+        double U_Im[3];
+        for (int k=0; k<3; ++k) {
+            U_Re[k] =  U_Re[init_flavour][k] * U_Re[final_flavour][k] + U_Im[init_flavour][k] * U_Im[final_flavour][k];
+            U_Im[k] =  U_Im[init_flavour][k] * U_Re[final_flavour][k] - U_Re[init_flavour][k] * U_Im[final_flavour][k];
+        }
+
+        // Compute probability
+        double P  =  - 4.0 * ((U_Re[1]*U_Re[0] + U_Im[1]*U_Im[0]) * s2_21*s2_21
+                            + (U_Re[2]*U_Re[0] + U_Im[2]*U_Im[0]) * s2_31*s2_31
+                            + (U_Re[2]*U_Re[1] + U_Im[2]*U_Im[1]) * s2_32*s2_32)
+              + anti * 2.0 * ((U_Im[1]*U_Re[0] - U_Re[1]*U_Im[0]) * s_21
+                            + (U_Im[2]*U_Re[0] - U_Re[2]*U_Im[0]) * s_31
+                            + (U_Im[2]*U_Re[1] - U_Re[2]*U_Im[1]) * s_32);
+
     }
 
-    double m21 = *(dataPoint + 18);
-    double m31 = *(dataPoint + 19);
-    double m32 = *(dataPoint + 20);
-
-    // std::cout << "m21 = " << m21 << std::endl;
-    // std::cout << "m31 = " << m31 << std::endl;
-    // std::cout << "m32 = " << m32 << std::endl;
-
-    // Compute survival probability
-    double sin21_2 = sin((m21 * L) / (4.0 * E));
-    double sin31_2 = sin((m31 * L) / (4.0 * E));
-    double sin32_2 = sin((m32 * L) / (4.0 * E));
-    double sin21 = sin((m21 * L) / (2.0 * E));
-    double sin31 = sin((m31 * L) / (2.0 * E));
-    double sin32 = sin((m32 * L) / (2.0 * E));
-
-    double anitInt = 1.0;
-    if(anti){anitInt = -1.0;}
-
-    // Compute probability
-    double P  =  - 4.0 * ((U_em_Re[1]*U_em_Re[0] + U_em_Im[1]*U_em_Im[0]) * sin21_2*sin21_2
-                        + (U_em_Re[2]*U_em_Re[0] + U_em_Im[2]*U_em_Im[0]) * sin31_2*sin31_2
-                        + (U_em_Re[2]*U_em_Re[1] + U_em_Im[2]*U_em_Im[1]) * sin32_2*sin32_2)
-        + anitInt * 2.0 * ((U_em_Im[1]*U_em_Re[0]- U_em_Re[1]*U_em_Im[0]) * sin21
-                        + (U_em_Im[2]*U_em_Re[0] - U_em_Re[2]*U_em_Im[0]) * sin31
-                        + (U_em_Im[2]*U_em_Re[1] - U_em_Re[2]*U_em_Im[1]) * sin32);
-
     return P;
-}
-
-
-/**
- * @brief Transition probability of (anti)muon neutrinos to (anti)electron neutrinos,
- * compted by Globes package
- * 
- * @param Ne Electron density (is converted to matter density before being passed to globes function)
- * @param E Neutrino energy
- * @param L Baseline
- * @param anti Is it an antineutrino?
- * @return double 
- */
-double Transition_Prob_Globes(double Ne, double E, double L, bool anti) {
-    // convert units to eV
-    E /= 1e3; //(MeV to GeV)
-
-    // Input parameters
-    double delta13 = 1.36 * M_PI;
-
-    double s12 = sqrt(0.297);
-    double s13 = sqrt(0.0215);
-    double s23 = sqrt(0.545);
-
-    double theta12 = asin(s12);
-    double theta13 = asin(s13);
-    double theta23 = asin(s23);
-
-    // Define mass differences
-    double m21 = 7.5288e-05; //(Delta m_21^2, in eV^2)
-    double m31 = 0.0025283; //(Delta m_31^2, in eV^2)
-    double m32 = 0.00245301; //(Delta m_32^2, in eV^2)
-
-    // Initialise Globes stuff
-    // char* exp_file = (char *)"/home/jamicus/Studies/PhD/Antinu/Matter_Effects/Globes/globes-3.0.11/examples/NFstandard.glb";
-    /* Initialize experiment NFstandard.glb */
-    // glbInitExperiment(exp_file, &glb_experiment_list[0], &glb_num_of_exps);
-    /* Initialize parameter vector(s) */
-    glb_params true_values = glbAllocParams();
-    /* Assign: theta12,theta13,theta23,deltacp,dm2solar,dm2atm */
-    glbDefineParams(true_values, theta12, theta13, theta23, delta13, m21, m31);
-    //glbSetDensityParams(true_values,1.0,GLB_ALL); // Matter scaling
-    /* The simulated data are computed */
-    glbSetOscillationParameters(true_values);
-    glbSetRates();
-
-    // Run Globes function
-    int anitInt = 1;
-    if(anti){anitInt = -1;}
-    Ne *= 1e-6; //(m^-3 to cm^3)
-    double rho = Ne * 4.821e-15;  //matter density g/cm^3
-    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
-    double P_globes = glbConstantDensityProbability(2, 1, anitInt, E, L, rho);
-
-    return P_globes;
-}
-
-/**
- * @brief Transition probability of (anti)muon neutrinos to (anti)electron neutrinos in vacuum,
- * compted by Globes package
- * 
- * @param E Neutrino energy
- * @param L Baseline
- * @param anti Is it an antineutrino?
- * @return double 
- */
-double Transition_Prob_Vac_Globes(double E, double L, bool anti) {
-    // convert units to eV
-    E /= 1e3; //(MeV to GeV)
-
-    // Input parameters
-    double delta13 = 1.36 * M_PI;
-
-    double s12 = sqrt(0.297);
-    double s13 = sqrt(0.0215);
-    double s23 = sqrt(0.545);
-
-    double theta12 = asin(s12);
-    double theta13 = asin(s13);
-    double theta23 = asin(s23);
-
-    // Define mass differences
-    double m21 = 7.5288e-05; //(Delta m_21^2, in eV^2)
-    double m31 = 0.0025283; //(Delta m_31^2, in eV^2)
-    double m32 = 0.00245301; //(Delta m_32^2, in eV^2)
-
-    // Initialise Globes stuff
-    // char* exp_file = (char *)"/home/jamicus/Studies/PhD/Antinu/Matter_Effects/Globes/globes-3.0.11/examples/NFstandard.glb";
-    /* Initialize experiment NFstandard.glb */
-    // glbInitExperiment(exp_file, &glb_experiment_list[0], &glb_num_of_exps);
-    /* Initialize parameter vector(s) */
-    glb_params true_values = glbAllocParams();
-    /* Assign: theta12,theta13,theta23,deltacp,dm2solar,dm2atm */
-    glbDefineParams(true_values, theta12, theta13, theta23, delta13, m21, m31);
-    //glbSetDensityParams(true_values,1.0,GLB_ALL); // Matter scaling
-    /* The simulated data are computed */
-    glbSetOscillationParameters(true_values);
-    glbSetRates();
-
-    // Run Globes function
-    int anitInt = 1;
-    if(anti){anitInt = -1;}
-    //std::cout << ((sqrt(2) * GF) / (7.5e-14 * 0.5)) * 1e6 * c*c*c * hbar*hbar*hbar << std::endl;
-    double P_globes = glbVacuumProbability(2, 1, anitInt, E, L);
-
-    return P_globes;
 }
