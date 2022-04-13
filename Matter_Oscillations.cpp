@@ -408,8 +408,10 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         double U_Re[3];
         double U_Im[3];
         for (int k=0; k<3; ++k) {
-            U_Re[k] =  U_r[init_flavour][k] * U_r[final_flavour][k] + U_i[init_flavour][k] * U_i[final_flavour][k];
-            U_Im[k] =  U_i[init_flavour][k] * U_r[final_flavour][k] - U_r[init_flavour][k] * U_i[final_flavour][k];
+            // U_Re[k] =  U_r[init_flavour][k] * U_r[final_flavour][k] + U_i[init_flavour][k] * U_i[final_flavour][k];
+            // U_Im[k] =  U_i[init_flavour][k] * U_r[final_flavour][k] - U_r[init_flavour][k] * U_i[final_flavour][k];
+            U_Re[k] =  U_r[final_flavour][k] * U_r[init_flavour][k] + U_i[final_flavour][k] * U_i[init_flavour][k];
+            U_Im[k] =  U_i[final_flavour][k] * U_r[init_flavour][k] - U_r[final_flavour][k] * U_i[init_flavour][k];
         }
 
         // Compute probability
