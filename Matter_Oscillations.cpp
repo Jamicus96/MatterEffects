@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
         L = L_min + i * L_step;
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
         double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
-        double P_globes = glbConstantDensityProbability(init_flavour, final_flavour, anti, E, L, rho);
-        double P_vac_globes = glbVacuumProbability(init_flavour, final_flavour, anti, E, L);
+        double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E, L, rho);
+        double P_vac_globes = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E, L);
 
         // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
 
