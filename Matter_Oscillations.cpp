@@ -174,14 +174,14 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
     for (unsigned int f = 0; f < 3; ++f) {
         H_ee +=                 mf1[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
         Y_ee += (1.0/3.0) *     mf1_2[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
-        H_r +=                  mf1[f] * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
-        Y_r += (1.0/3.0) *      mf1_2[f] * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
+        H_r +=                  mf1[f] * (U_r[final_flavour][f]*U_r[init_flavour][f] + U_i[final_flavour][f]*U_i[init_flavour][f]);
+        Y_r += (1.0/3.0) *      mf1_2[f] * (U_r[final_flavour][f]*U_r[init_flavour][f] + U_i[final_flavour][f]*U_i[init_flavour][f]);
         if (init_flavour == final_flavour) {
             H_r -= (1.0/3.0) *  mf1[f];
             Y_r -= (1.0/9.0) *  mf1_2[f];
         } else {
-            H_i +=              mf1[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
-            Y_i += (1.0/3.0) *  mf1_2[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+            H_i +=              mf1[f] * (U_i[final_flavour][f]*U_r[init_flavour][f] - U_r[final_flavour][f]*U_i[init_flavour][f]);
+            Y_i += (1.0/3.0) *  mf1_2[f] * (U_i[final_flavour][f]*U_r[init_flavour][f] - U_r[final_flavour][f]*U_i[init_flavour][f]);
         }
     }
     vals.push_back(H_ee);   vals.push_back(Y_ee);   vals.push_back(H_r);
@@ -408,8 +408,6 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         double U_Re[3];
         double U_Im[3];
         for (int k=0; k<3; ++k) {
-            // U_Re[k] =  U_r[init_flavour][k] * U_r[final_flavour][k] + U_i[init_flavour][k] * U_i[final_flavour][k];
-            // U_Im[k] =  U_i[init_flavour][k] * U_r[final_flavour][k] - U_r[init_flavour][k] * U_i[final_flavour][k];
             U_Re[k] =  U_r[final_flavour][k] * U_r[init_flavour][k] + U_i[final_flavour][k] * U_i[init_flavour][k];
             U_Im[k] =  U_i[final_flavour][k] * U_r[init_flavour][k] - U_r[final_flavour][k] * U_i[init_flavour][k];
         }
