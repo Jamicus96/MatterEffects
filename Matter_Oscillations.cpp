@@ -57,10 +57,10 @@ double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
 int main(int argc, char *argv[]) {
     // Read in arguments
     double E = atof(argv[1]); // MeV
+    double rho = atof(argv[5]); // g/cm^3
     double L_min = atof(argv[2]); // km
     double L_max = atof(argv[3]); // km
     int N = atof(argv[4]); // number of data points between L_min and L_max
-    double rho = atof(argv[5]); // g/cm^3
     int init_flavour = atoi(argv[6]); // 0=e, 1=mu, 2=tau
     int final_flavour = atoi(argv[7]); // 0=e, 1=mu, 2=tau
     int anti = atoi(argv[8]); // -1 = antineutrino, 1 = neutrino
@@ -99,7 +99,8 @@ int main(int argc, char *argv[]) {
         // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
 
         // Print results to file
-        datafile << E << " " << rho << " " << L << " " << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
+        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L
+                 << " " << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
         // Step baseline forward
         L += L_step;
     }
