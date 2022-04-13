@@ -30,10 +30,8 @@ double* read_data(std::string filename, int num);
 /* ----- Global variables ----- */
 /* ---------------------------- */
 
-// Universal constants
-double hbar = 6.58211957e-16;   // (eV.s)
-double c = 299792458;           // (m/s)
-
+// Conversion from km to eV^-1 (from hbar = 6.58211957e-16 eV.s, c = 299792458 m/s)
+double L_FACTOR = 5.06773e+09;  
 // Convert matter density (g/cm^3) to matter potential (eV)
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
 double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
@@ -249,7 +247,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // convert units to eV
     E *= 1e6; //(MeV to eV)
-    L *= 1e3 / (c * hbar); //(km to eV^-1)
+    L *= L_FACTOR; //(km to eV^-1)
 
     // Unpack constants {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
     double a0 = consts.at(0);
@@ -356,7 +354,7 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
-    L *= 1e3 / (c * hbar); //(km to eV^-1)
+    L *= L_FACTOR; //(km to eV^-1)
 
 
     // Unpack data in PMNS matrix (real and imginary parts)
