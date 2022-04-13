@@ -21,21 +21,31 @@
 
 double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti);
-double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], double L, double E,
+double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double>>> U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti);
-std::vector<double> compute_constants(double m21, double m31, double PMNS_values[18], int init_flavour,int final_flavour);
-double* read_data(std::string filename, int num);
+std::vector<std::vector<std::vector<double>>> calculate_PMNS();
+std::vector<double> compute_constants(std::vector<std::vector<std::vector<double>>> U_PMNS, int init_flavour,int final_flavour);
 
 /* ---------------------------- */
 /* ----- Global variables ----- */
 /* ---------------------------- */
 
 // Conversion from km to eV^-1 (from hbar = 6.58211957e-16 eV.s, c = 299792458 m/s)
-double L_FACTOR = 5.06773e+09;  
+double L_FACTOR = 5.06773e+09;
+
 // Convert matter density (g/cm^3) to matter potential (eV)
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
 double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
 double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
+
+// Oscillation constants
+double theta12 = np.arcsin(np.sqrt(0.307));
+double theta13 = np.arcsin(np.sqrt(2.18e-2));
+double theta23 = np.arcsin(np.sqrt(0.545));     // Normal Hierarchy
+// double theta23 = np.arcsin(np.sqrt(0.547));  // Inverted Hierarchy
+double delta = 1.36 * M_PI;                     // Not sure about the hierarchy (NH I think here)
+double m21 = 7.53e-5;                           // (Delta m_21^2, in eV^2)
+double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
 
 
 /* ---------------------------- */
@@ -53,20 +63,12 @@ int main(int argc, char *argv[]) {
     int final_flavour = atoi(argv[7]); // 0=e, 1=mu, 2=tau
     int anti = atoi(argv[8]); // -1 = antineutrino, 1 = neutrino
 
-    // Read in calculated constants from files
-    double* osc_consts = read_data("oscillation_constants.txt", 6);
-    double* PMNS_values = read_data("PMNS.txt", 18);
-
-    // Unpack osc_consts
-    double theta12 = osc_consts[0];
-    double theta13 = osc_consts[1];
-    double theta23 = osc_consts[2];
-    double delta = osc_consts[3];
-    double m21 = osc_consts[4];
-    double m31 = osc_consts[5];
+    // Compute PMNS matrix (kinda part of my initialisation, unless I use the mixing angles directly,
+    // which I would definitely for one harcoded flavour transition)
+    std::vector<std::vector<std::vector<double>>> U_PMNS = calculate_PMNS();
 
     // Initialse my algorithm with pre-loop constants
-    std::vector<double> consts = compute_constants(m21, m31, PMNS_values, init_flavour,final_flavour);
+    std::vector<double> consts = compute_constants(U_PMNS, init_flavour,final_flavour);
 
     // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
@@ -88,7 +90,7 @@ int main(int argc, char *argv[]) {
     double L = L_min;
     for (unsigned int i = 0; i < N+1; ++i) {
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
-        double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
+        double P_vac = Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti);
         double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho);   // flavours + 1 to mine, and energy in GeV
         double P_vac_globes = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L);             // flavours + 1 to mine, and energy in GeV
 
@@ -105,30 +107,44 @@ int main(int argc, char *argv[]) {
 
 
 
-/**
- * @brief Read data from text file, with one number per line, into array of given length
- * 
- * @param filename 
- * @param num 
- * @return double*
- */
-double* read_data(std::string filename, int num) {
-    //Create an input file stream
-    std::ifstream infile(filename.c_str());
 
-    double* array = new double[num];
-    double a;
-    int i = 0;
-    while (infile >> a) {
-        array[i] = a;
-        ++i;
-    }
-    
-    return array;
-}
 
 
 /* -------------------- PRE-LOOP CONSTANTS ------------------- */
+
+/**
+ * @brief Computes PMNS matrix elements from mixing angles and CP phase (delta).
+ * These are all global variables. Returns vector of two 3x3 vectors of vectors
+ * representing the real part of the PMNS matrix, and the imaginary part respectovely.
+ * 
+ * @return std::vector<std::vector<std::vector<double>>> 
+ */
+std::vector<std::vector<std::vector<double>>> calculate_PMNS() {
+    // Compute useful constants
+    double s12 = std::sin(theta12);
+    double s13 = std::sin(theta13);
+    double s23 = std::sin(theta23);
+    double c12 = std::cos(theta12);
+    double c13 = std::cos(theta13);
+    double c23 = std::cos(theta23);
+    double c_delta = std::cos(delta);
+    double s_delta = std::sin(delta);
+
+    // Declare vector of 2 3x3 matrices filled with zeros
+    std::vector<std::vector<std::vector<double>>> U (2, std::vector<std::vector<double>> (3, std::vector<double> (3, 0.0)));
+
+    // Real part of PMNS matrix
+    U.at(0).at(0).at(0) = c12 * c13;                               U.at(0).at(0).at(1) = s12 * c13;                               U.at(0).at(0).at(2) = s13 * c_delta;
+    U.at(0).at(1).at(0) = - s12 * c23 - s13 * s23 * c12 * c_delta; U.at(0).at(1).at(1) = c12 * c23 - s12 * s13 * s23 * c_delta;   U.at(0).at(1).at(2) = s23 * c13;
+    U.at(0).at(2).at(0) = s12 * s23 - s13 * c12 * c23 * c_delta;   U.at(0).at(2).at(1) = - s23 * c12 - s12 * s13 * c23 * c_delta; U.at(0).at(2).at(2) = c13 * c23;
+
+    // Imaginary part of PMNS matrix
+    U.at(1).at(0).at(0) = 0.0;                                     U.at(1).at(0).at(1) = 0.0;                                     U.at(1).at(0).at(2) = - s13 * s_delta;
+    U.at(1).at(1).at(0) = - s13 * s23 * c12 * s_delta;             U.at(1).at(1).at(1) = - s12 * s13 * s23 * s_delta;             U.at(1).at(1).at(2) = 0.0;
+    U.at(1).at(2).at(0) = - s13 * c12 * c23 * s_delta;             U.at(1).at(2).at(1) = - s12 * s13 * c23 * s_delta;             U.at(1).at(2).at(2) = 0.0;
+
+    return U;
+}
 
 /**
  * @brief Returns vector of relevent constants for oscillation calculation (D ant T are divided by 3 w.r.t my paper).
@@ -140,7 +156,7 @@ double* read_data(std::string filename, int num) {
  * @param final_flavour 
  * @return std::vector<double> = {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
  */
-std::vector<double> compute_constants(double m21, double m31, double PMNS_values[18], int init_flavour,int final_flavour) {
+std::vector<double> compute_constants(std::vector<std::vector<std::vector<double>>> U_PMNS, int init_flavour,int final_flavour) {
     // initialise vector
     std::vector<double> vals;
 
@@ -151,14 +167,8 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
     /* ------------------------ */
 
     // Unpack data in PMNS matrix (real and imginary parts)
-    double U_r[3][3];
-    double U_i[3][3];
-    for (unsigned int i = 0; i < 3; ++i) {
-        for (unsigned int j = 0; j < 3; ++j) {
-            U_r[i][j] = PMNS_values[3 * i + j];
-            U_i[i][j] = PMNS_values[3 * i + j + 9];
-        }
-    }
+    std::vector<std::vector<double>> U_r = U_PMNS.at(0);
+    std::vector<std::vector<double>> U_i = U_PMNS.at(i);
 
     // Compute relevent matrix components
     double H_ee = 0.0;
@@ -170,16 +180,16 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
     double mf1[3] = {0.0, m21, m31};
     double mf1_2[3] = {2.0*m21*m31, m21*m21, m31*m31};
     for (unsigned int f = 0; f < 3; ++f) {
-        H_ee +=                 mf1[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
-        Y_ee += (1.0/3.0) *     mf1_2[f] * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
-        H_r +=                  mf1[f] * (U_r[final_flavour][f]*U_r[init_flavour][f] + U_i[final_flavour][f]*U_i[init_flavour][f]);
-        Y_r += (1.0/3.0) *      mf1_2[f] * (U_r[final_flavour][f]*U_r[init_flavour][f] + U_i[final_flavour][f]*U_i[init_flavour][f]);
+        H_ee +=                 mf1[f] * (U_r.at(0).at(f)*U_r.at(0).at(f) + U_i.at(0).at(f)*U_i.at(0).at(f) - (1.0/3.0));
+        Y_ee += (1.0/3.0) *     mf1_2[f] * (U_r.at(0).at(f)*U_r.at(0).at(f) + U_i.at(0).at(f)*U_i.at(0).at(f) - (1.0/3.0));
+        H_r +=                  mf1[f] * (U_r.at(final_flavour).at(f)*U_r.at(init_flavour).at(f) + U_i.at(final_flavour).at(f)*U_i.at(init_flavour).at(f));
+        Y_r += (1.0/3.0) *      mf1_2[f] * (U_r.at(final_flavour).at(f)*U_r.at(init_flavour).at(f) + U_i.at(final_flavour).at(f)*U_i.at(init_flavour).at(f));
         if (init_flavour == final_flavour) {
             H_r -= (1.0/3.0) *  mf1[f];
             Y_r -= (1.0/9.0) *  mf1_2[f];
         } else {
-            H_i +=              mf1[f] * (U_i[final_flavour][f]*U_r[init_flavour][f] - U_r[final_flavour][f]*U_i[init_flavour][f]);
-            Y_i += (1.0/3.0) *  mf1_2[f] * (U_i[final_flavour][f]*U_r[init_flavour][f] - U_r[final_flavour][f]*U_i[init_flavour][f]);
+            H_i +=              mf1[f] * (U_i.at(final_flavour).at(f)*U_r.at(init_flavour).at(f) - U_r.at(final_flavour).at(f)*U_i.at(init_flavour).at(f));
+            Y_i += (1.0/3.0) *  mf1_2[f] * (U_i.at(final_flavour).at(f)*U_r.at(init_flavour).at(f) - U_r.at(final_flavour).at(f)*U_i.at(init_flavour).at(f));
         }
     }
     vals.push_back(H_ee);   vals.push_back(Y_ee);   vals.push_back(H_r);
@@ -347,7 +357,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
  * @param anti 1=neutrino, -1=antineutrino.
  * @return double 
  */
-double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], double L, double E,
+double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double>>> U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
@@ -355,14 +365,8 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
 
 
     // Unpack data in PMNS matrix (real and imginary parts)
-    double U_r[3][3];
-    double U_i[3][3];
-    for (unsigned int i = 0; i < 3; ++i) {
-        for (unsigned int j = 0; j < 3; ++j) {
-            U_r[i][j] = PMNS_values[3 * i + j];
-            U_i[i][j] = PMNS_values[3 * i + j + 9];
-        }
-    }
+    std::vector<std::vector<double>> U_r = U_PMNS.at(0);
+    std::vector<std::vector<double>> U_i = U_PMNS.at(i);
 
     // Compute oscillation probability: different case for survival and transition
     double P;
@@ -379,7 +383,7 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
 
         double U_mag2[3];
         for(int i=0; i<3; ++i){
-            U_mag2[i] = U_r[init_flavour][i]*U_r[init_flavour][i] + U_i[init_flavour][i]*U_i[init_flavour][i];
+            U_mag2[i] = U_r.at(init_flavour).at(i]*U_r.at(init_flavour).at(i] + U_i.at(init_flavour).at(i]*U_i.at(init_flavour).at(i];
 
             // std::cout << "|U_" << init_flavour << i << "| = " <<  U_mag2[i] << std::endl;
         }
@@ -406,8 +410,8 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
         double U_Re[3];
         double U_Im[3];
         for (int k=0; k<3; ++k) {
-            U_Re[k] =  U_r[final_flavour][k] * U_r[init_flavour][k] + U_i[final_flavour][k] * U_i[init_flavour][k];
-            U_Im[k] =  U_i[final_flavour][k] * U_r[init_flavour][k] - U_r[final_flavour][k] * U_i[init_flavour][k];
+            U_Re[k] =  U_r.at(final_flavour).at(k) * U_r.at(init_flavour).at(k) + U_i.at(final_flavour).at(k) * U_i.at(init_flavour).at(k);
+            U_Im[k] =  U_i.at(final_flavour).at(k) * U_r.at(init_flavour).at(k) - U_r.at(final_flavourU_i.at(k) * U_i.at(init_flavour.at(k);
         }
 
         // Compute probability
