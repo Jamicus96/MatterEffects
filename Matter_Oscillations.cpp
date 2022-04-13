@@ -281,16 +281,16 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
             std::cout << "(X_" << i << ")_" << init_flavour << final_flavour << " = " <<  X[i] << std::endl;
         }
 
-        double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
-        double s_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
-        double s_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
+        double s2_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
+        double s2_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
+        double s2_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
 
         std::cout << "sin(((eigen[1] - eigen[0]) * L) / (4 * E)) = " << s2_10 << std::endl;
         std::cout << "sin(((eigen[2] - eigen[0]) * L) / (4 * E)) = " << s2_20 << std::endl;
         std::cout << "sin(((eigen[2] - eigen[1]) * L) / (4 * E)) = " << s2_21 << std::endl;
 
         // Compute probability
-        P = 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
+        P = 1.0 - 4.0 * (X[1]*X[0]*s2_10*s2_10 + X[2]*X[0]*s2_20*s2_20 + X[2]*X[1]*s2_21*s2_21);
 
     } else {
         // Get eigenvalues of H, and constants X
