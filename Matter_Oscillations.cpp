@@ -21,10 +21,10 @@
 
 double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti);
-double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double>>> U_PMNS, double L, double E,
+double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti);
-std::vector<std::vector<std::vector<double>>> calculate_PMNS();
-std::vector<double> compute_constants(std::vector<std::vector<std::vector<double>>> U_PMNS, int init_flavour,int final_flavour);
+std::vector<std::vector<std::vector<double> > > calculate_PMNS();
+std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour);
 
 /* ---------------------------- */
 /* ----- Global variables ----- */
@@ -39,9 +39,9 @@ double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
 double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
 
 // Oscillation constants
-double theta12 = np.arcsin(np.sqrt(0.307));
-double theta13 = np.arcsin(np.sqrt(2.18e-2));
-double theta23 = np.arcsin(np.sqrt(0.545));     // Normal Hierarchy
+double theta12 = std::asin(std::sqrt(0.307));
+double theta13 = std::asin(std::sqrt(2.18e-2));
+double theta23 = std::asin(std::sqrt(0.545));     // Normal Hierarchy
 // double theta23 = np.arcsin(np.sqrt(0.547));  // Inverted Hierarchy
 double delta = 1.36 * M_PI;                     // Not sure about the hierarchy (NH I think here)
 double m21 = 7.53e-5;                           // (Delta m_21^2, in eV^2)
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 
     // Compute PMNS matrix (kinda part of my initialisation, unless I use the mixing angles directly,
     // which I would definitely for one harcoded flavour transition)
-    std::vector<std::vector<std::vector<double>>> U_PMNS = calculate_PMNS();
+    std::vector<std::vector<std::vector<double> > > U_PMNS = calculate_PMNS();
 
     // Initialse my algorithm with pre-loop constants
     std::vector<double> consts = compute_constants(U_PMNS, init_flavour,final_flavour);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
  * 
  * @return std::vector<std::vector<std::vector<double>>> 
  */
-std::vector<std::vector<std::vector<double>>> calculate_PMNS() {
+std::vector<std::vector<std::vector<double> > > calculate_PMNS() {
     // Compute useful constants
     double s12 = std::sin(theta12);
     double s13 = std::sin(theta13);
@@ -131,7 +131,7 @@ std::vector<std::vector<std::vector<double>>> calculate_PMNS() {
     double s_delta = std::sin(delta);
 
     // Declare vector of 2 3x3 matrices filled with zeros
-    std::vector<std::vector<std::vector<double>>> U (2, std::vector<std::vector<double>> (3, std::vector<double> (3, 0.0)));
+    std::vector<std::vector<std::vector<double> > > U (2, std::vector<std::vector<double> > (3, std::vector<double> (3, 0.0)));
 
     // Real part of PMNS matrix
     U.at(0).at(0).at(0) = c12 * c13;                               U.at(0).at(0).at(1) = s12 * c13;                               U.at(0).at(0).at(2) = s13 * c_delta;
@@ -156,7 +156,7 @@ std::vector<std::vector<std::vector<double>>> calculate_PMNS() {
  * @param final_flavour 
  * @return std::vector<double> = {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
  */
-std::vector<double> compute_constants(std::vector<std::vector<std::vector<double>>> U_PMNS, int init_flavour,int final_flavour) {
+std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour) {
     // initialise vector
     std::vector<double> vals;
 
@@ -167,8 +167,8 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
     /* ------------------------ */
 
     // Unpack data in PMNS matrix (real and imginary parts)
-    std::vector<std::vector<double>> U_r = U_PMNS.at(0);
-    std::vector<std::vector<double>> U_i = U_PMNS.at(i);
+    std::vector<std::vector<double> > U_r = U_PMNS.at(0);
+    std::vector<std::vector<double> > U_i = U_PMNS.at(i);
 
     // Compute relevent matrix components
     double H_ee = 0.0;
@@ -357,7 +357,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
  * @param anti 1=neutrino, -1=antineutrino.
  * @return double 
  */
-double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double>>> U_PMNS, double L, double E,
+double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
@@ -365,8 +365,8 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double>>> U_PMNS
 
 
     // Unpack data in PMNS matrix (real and imginary parts)
-    std::vector<std::vector<double>> U_r = U_PMNS.at(0);
-    std::vector<std::vector<double>> U_i = U_PMNS.at(i);
+    std::vector<std::vector<double> > U_r = U_PMNS.at(0);
+    std::vector<std::vector<double> > U_i = U_PMNS.at(i);
 
     // Compute oscillation probability: different case for survival and transition
     double P;
