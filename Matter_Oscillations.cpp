@@ -37,6 +37,8 @@ double L_FACTOR = 5.06773e+09;
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
 double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
 double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
+// eV to km conversion (also from GLoBES: GLOBES-3.0.11/globes/globes.h):
+double GLB_EV_TO_KM_FACTOR = 1.9747235e-10;
 
 // Oscillation constants
 double theta12 = std::asin(std::sqrt(0.307));
@@ -254,7 +256,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // convert units to eV
     E *= 1e6; //(MeV to eV)
-    L *= L_FACTOR; //(km to eV^-1)
+    L /= GLB_EV_TO_KM_FACTOR; //(km to eV^-1)
 
     // Unpack constants {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
     double a0 = consts.at(0);
@@ -361,7 +363,7 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
-    L *= L_FACTOR; //(km to eV^-1)
+    L /= GLB_EV_TO_KM_FACTOR; //(km to eV^-1)
 
 
     // Unpack data in PMNS matrix (real and imginary parts)
