@@ -1,7 +1,7 @@
 /**
  * @file Matter_Oscillations.cpp
  * @author James Page (jp643@sussex.ac.uk)
- * @brief Computing anti-electron neutrino survival probability with matter effects,
+ * @brief Computing (anti)neutrino oscillation probabilities with matter effects,
  * assuming constant electron density.
  * @version 1
  * @date 2021-05-29
@@ -26,17 +26,24 @@ double Oscillation_Prob_Vac(double m21, double m31, double PMNS_values[18], doub
 std::vector<double> compute_constants(double m21, double m31, double PMNS_values[18], int init_flavour,int final_flavour);
 double* read_data(std::string filename, int num);
 
+/* ---------------------------- */
+/* ----- Global variables ----- */
+/* ---------------------------- */
 
-// Global variables
+// Universal constants
 double GF = 1.663788e-14;       // (eV^-2)
 double hbar = 6.58211957e-16;   // (eV.s)
 double c = 299792458;           // (m/s)
+
 // Convert matter density (g/cm^3) to matter potential (eV)
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
 double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
 double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
 
 
+/* ---------------------------- */
+/* ------ Main Functions ------ */
+/* ---------------------------- */
 
 int main(int argc, char *argv[]) {
     // Read in arguments
