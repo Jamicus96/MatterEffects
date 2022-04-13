@@ -173,7 +173,7 @@ std::vector<double> compute_constants(double m21, double m31, double PMNS_values
             Y_r -= (1.0/9.0) *  mf1_2[f];
         } else {
             H_i +=              mf1[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
-            Y_i += (1.0/3.0) *  mf1_3[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+            Y_i += (1.0/3.0) *  mf1_2[f] * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
         }
     }
     vals.push_back(H_ee);   vals.push_back(Y_ee);   vals.push_back(H_r);
