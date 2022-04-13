@@ -31,14 +31,14 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
 /* ---------------------------- */
 
 // Conversion from km to eV^-1 (from hbar = 6.58211957e-16 eV.s, c = 299792458 m/s)
-double L_FACTOR = 5.06773e+09;
+// double L_FACTOR = 5.06773e+09;
 
 // Convert matter density (g/cm^3) to matter potential (eV)
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
-double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
-double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
+double GLB_V_FACTOR_ = 7.5e-14;   /* Conversion factor for matter potentials */
+double GLB_Ne_MANTLE_ = 0.5;     /* Effective electron numbers for calculation */
 // eV to km conversion (also from GLoBES: GLOBES-3.0.11/globes/globes.h):
-double GLB_EV_TO_KM_FACTOR = 1.9747235e-10;
+double GLB_EV_TO_KM_FACTOR_ = 1.9747235e-10;
 
 // Oscillation constants
 double theta12 = std::asin(std::sqrt(0.307));
@@ -256,7 +256,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // convert units to eV
     E *= 1e6; //(MeV to eV)
-    L /= GLB_EV_TO_KM_FACTOR; //(km to eV^-1)
+    L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Unpack constants {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
     double a0 = consts.at(0);
@@ -272,9 +272,9 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
     double T_i = consts.at(10);
 
     if (rho != 0.0) {
-        // Convert matter density (g/cm^3) to matter potential (eV): V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho
+        // Convert matter density (g/cm^3) to matter potential (eV): V = GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho
         // And: A_CC = +/- 2 * E * V
-        double A_CC = anti * 2.0 * E * GLB_V_FACTOR * GLB_Ne_MANTLE * rho; // (eV^2)
+        double A_CC = anti * 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
 
         // Correct constants for matter effects (D = 0 for transition prob)
         a0 += -Y_ee * A_CC - (1.0/3.0) * H_ee * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
@@ -363,7 +363,7 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
     E *= 1e6; //(MeV to eV)
-    L /= GLB_EV_TO_KM_FACTOR; //(km to eV^-1)
+    L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
 
     // Unpack data in PMNS matrix (real and imginary parts)
