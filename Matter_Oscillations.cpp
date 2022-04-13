@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     double L_step = (L_max - L_min) / N;
     double L;
     for (unsigned int i = 0; i < N+1; ++i) {
-        L = i * L_step;
+        L = L_min + i * L_step;
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
         double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
         double P_globes = glbConstantDensityProbability(init_flavour, final_flavour, anti, E, L, rho);
