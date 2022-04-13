@@ -29,9 +29,18 @@ double Transition_Prob_Vac_Globes(double E, double L, bool anti=true);
 double* read_data(std::string filename, int num);
 
 // Global variables
-double GF = 1.663788e-14; //(eV^-2)
-double hbar = 6.58211957e-16; //(eV.s)
-double c = 299792458; //(m/s)
+double GF = 1.663788e-14;       // (eV^-2)
+double hbar = 6.58211957e-16;   // (eV.s)
+double c = 299792458;           // (m/s)
+
+// Oscillation constants
+double delta13 = 1.36 * M_PI;
+double theta12 = asin(sqrt(0.297));
+double theta13 = asin(sqrt(0.0215));
+double theta23 = asin(sqrt(0.545));
+double m21 = 7.53e-5;           // (Delta m_21^2, in eV^2)
+double m31 = 0.0025283;         // (Delta m_31^2, in eV^2)
+double m32 = m31 - m21;         // (Delta m_32^2, in eV^2)
 
 
 int main(int argc, char *argv[]) {
@@ -50,8 +59,14 @@ int main(int argc, char *argv[]) {
     // Call function to compute and print needed constants to new file, and compare to vac
     double E = atof(argv[1]); // MeV
     double L = atof(argv[2]); // km
-    double Ne = atof(argv[3]); // m^-3
+    // double Ne = atof(argv[3]); // m^-3
+    double rho = atof(argv[3]); // g/cm^3
     int type = atoi(argv[4]); // 0=survival, 1=transition
+
+    // From GLOBES-3.0.11/src/glb_probability.h:
+    double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
+    double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
+    double V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho;  // Matter potential (eV)
 
     double P;
     double P_vac;

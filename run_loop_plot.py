@@ -8,11 +8,12 @@ import os
 # Oscillation constants
 theta12 = np.arcsin(np.sqrt(0.307))
 theta13 = np.arcsin(np.sqrt(2.18e-2))
-theta23 = np.arcsin(np.sqrt(0.545))
-delta = 1.36 * np.pi
-m21 = 7.53e-5       # (Delta m_21^2, in eV^2)
-m31 = 0.0025283     # (Delta m_31^2, in eV^2)
-# m32 = m31 - m21     # (Delta m_32^2, in eV^2)
+theta23 = np.arcsin(np.sqrt(0.545))     # Normal Hierarchy
+# theta23 = np.arcsin(np.sqrt(0.547))   # Inverted Hierarchy
+delta = 1.36 * np.pi                    # Not sure about the hierarchy
+m21 = 7.53e-5                           # (Delta m_21^2, in eV^2)
+m31 = 0.0025283                         # (Delta m_31^2, in eV^2)
+# m32 = m31 - m21                       # (Delta m_32^2, in eV^2)
 
 
 # Optional input arguments
@@ -20,9 +21,6 @@ def argparser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='Run matter effect neutrino oscillation in different modes.')
-
-    parser.add_argument('--mass_hierarchy', '-m', type=str, dest='mass_hierarchy', choices=['NO', 'IO'],
-                        default='NO', help='Normal Ordering (NO) or Inverted Ordering (IO) [CURRENTLY NOT IMPLEMENTED].')
     parser.add_argument('--antinu', '-a', type=bool, dest='antinu', choices=[True, False],
                         default=False, help='True to simulate antineutrinos, False for neutrinos.')
     parser.add_argument('--plot', '-p', type=bool, dest='plot', choices=[True, False],
@@ -129,7 +127,11 @@ def main():
             PMNS_elements.append(U_i[i][j])
     print_to_file('PMNS_m2_data.txt', PMNS_elements)
 
-    # Compute constants needed for algorithm, outside of loop
+    # Compute constants needed for algorithm, outside of loop (delete file these are printed to first)
+    filename = 'Constants.txt'
+    file_exists = os.path.exists(filename)
+    if file_exists:
+        os.system('rm ' + filename)
     os.system('./Mat_Os_Consts.exe')
 
     ### Simulation parameters ###
@@ -145,6 +147,7 @@ def main():
     # Plot results, if desired
     if args.plot:
         plot_results(L, E, rho)
+
 
 
 
