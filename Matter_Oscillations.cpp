@@ -15,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include <cstdlib>
+#include <vector>
 #include <globes/globes.h>
 
 
@@ -28,45 +29,47 @@ double Transition_Prob_Globes(double Ne, double E, double L, bool anti=true);
 double Transition_Prob_Vac_Globes(double E, double L, bool anti=true);
 double* read_data(std::string filename, int num);
 
+std::vector<std::vector<double>> compute_constants(double m21, double m31);
+std::vector<std::vector<std::vector<double>>> compute_vac_matrices(double PMNS_values[18], double m21, double m31);
+std::vector<std::vector<std::vector<double>>> compute_T_matrices(std::vector<std::vector<double>> H_r, std::vector<std::vector<double>> H_i);
+
 // Global variables
 double GF = 1.663788e-14;       // (eV^-2)
 double hbar = 6.58211957e-16;   // (eV.s)
 double c = 299792458;           // (m/s)
 
-// Oscillation constants
-double delta13 = 1.36 * M_PI;
-double theta12 = asin(sqrt(0.297));
-double theta13 = asin(sqrt(0.0215));
-double theta23 = asin(sqrt(0.545));
-double m21 = 7.53e-5;           // (Delta m_21^2, in eV^2)
-double m31 = 0.0025283;         // (Delta m_31^2, in eV^2)
-double m32 = m31 - m21;         // (Delta m_32^2, in eV^2)
 
 
 int main(int argc, char *argv[]) {
     // Read in calculated constants
-    double* constantsPoint = read_data("Constants.txt", 8);
-    double survival_constants[4];
-    double transition_constants[8];
-    for(int i=0; i<8; ++i){
-        transition_constants[i] = *(constantsPoint + i);
-        // std::cout << "const_" << i << " = " << transition_constants[i] << std::endl;
-        if (i < 4) {
-            survival_constants[i] = *(constantsPoint + i);
-        }
-    }
+    double* osc_consts = read_data("oscillation_constants.txt", 6);
+    double* PMNS_values = read_data("PMNS.txt", 18);
 
-    // Call function to compute and print needed constants to new file, and compare to vac
+    // Read in arguments
     double E = atof(argv[1]); // MeV
     double L = atof(argv[2]); // km
-    // double Ne = atof(argv[3]); // m^-3
     double rho = atof(argv[3]); // g/cm^3
-    int type = atoi(argv[4]); // 0=survival, 1=transition
+    int init_flavour = atoi(argv[4]); // 0=e, 1=mu, 2=tau
+    int final_flavour = atoi(argv[5]); // 0=e, 1=mu, 2=tau
+    int anti = atoi(argv[6]); // -1 = antineutrino, 1 = neutrino
 
-    // From GLOBES-3.0.11/src/glb_probability.h:
+    // Convert matter density of matter potential (from GLOBES-3.0.11/src/glb_probability.h):
     double GLB_V_FACTOR = 7.5e-14;   /* Conversion factor for matter potentials */
     double GLB_Ne_MANTLE = 0.5;     /* Effective electron numbers for calculation */
     double V = GLB_V_FACTOR * GLB_Ne_MANTLE * rho;  // Matter potential (eV)
+
+    // Initialse my algorithm with pre-loop constants
+    double m21 = osc_consts[4];
+    double m31 = osc_consts[5];
+    std::vector<std::vector<double>> consts = compute_constants(m21, m31);
+    std::vector<double> a = consts.at(0);
+    std::vector<double> D = consts.at(1);
+    std::vector<std::vector<std::vector<double>>> vac_matrices = compute_vac_matrices(PMNS_values[18], m21, m31);
+    std::vector<std::vector<double>> H_r = vac_matrices.at(0);
+    std::vector<std::vector<double>> H_i = vac_matrices.at(1);
+    std::vector<std::vector<double>> Y_r = vac_matrices.at(2);
+    std::vector<std::vector<double>> Y_i = vac_matrices.at(3);
+    std::vector<std::vector<std::vector<double>>> T = compute_T_matrices(vac_matrices.at(0), vac_matrices.at(1));
 
     double P;
     double P_vac;
@@ -121,7 +124,114 @@ double* read_data(std::string filename, int num) {
 }
 
 
+/* -------------------- PRE-LOOP CONSTANTS ------------------- */
+
+/**
+ * @brief Returns vector of relevent constants for oscillation calculation (D ant T are divided by 3 w.r.t my paper).
+ * 
+ * @param m21 
+ * @param m31 
+ * @param PMNS_values 
+ * @param init_flavour 
+ * @param final_flavour 
+ * @return std::vector<double> = {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
+ */
+std::vector<double> compute_constants(double m21, double m31, double PMNS_values[18], int init_flavour,int final_flavour) {
+    // initialise vector
+    std::vector<double> vals;
+
+    // scalar values
+    vals.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    vals.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31));  // a1
+
+    /* ------------------------ */
+
+    // Unpack data in PMNS matrix (real and imginary parts)
+    double U_r[3][3];
+    double U_i[3][3];
+    for (unsigned int i = 0; i < 3; ++i) {
+        for (unsigned int j = 0; j < 3; ++j) {
+            U_r[i][j] = PMNS_values[3 * i + j];
+            U_i[i][j] = PMNS_values[3 * i + j + 9];
+        }
+    }
+
+    // Compute relevent matrix components
+    double H_ee = 0.0;
+    double Y_ee = 0.0;
+    double H_r = 0.0;
+    double H_i = 0.0;
+    double Y_r = 0.0;
+    double Y_i = 0.0;
+    for (unsigned int f = 0; f < 3; ++f) {
+        H_ee +=                 mf1.at(f) * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
+        Y_ee += (1.0/3.0) *     mf1_2.at(f) * (U_r[0][f]*U_r[0][f] + U_i[0][f]*U_i[0][f] - (1.0/3.0));
+        H_r +=                  mf1.at(f) * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
+        Y_r += (1.0/3.0) *      mf1_2.at(f) * (U_r[init_flavour][f]*U_r[final_flavour][f] + U_i[init_flavour][f]*U_i[final_flavour][f]);
+        if (init_flavour == final_flavour) {
+            H_r -= (1.0/3.0) *  mf1.at(f);
+            Y_r -= (1.0/9.0) *  mf1_2.at(f);
+        } else {
+            H_i +=              mf1.at(f) * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+            Y_i += (1.0/3.0) *  mf1_3.at(f) * (U_i[init_flavour][f]*U_r[final_flavour][f] - U_r[init_flavour][f]*U_i[final_flavour][f]);
+        }
+    }
+    vals.push_back(H_ee);   vals.push_back(Y_ee);   vals.push_back(H_r);
+    vals.push_back(H_i);    vals.push_back(Y_r);    vals.push_back(Y_i);
+
+    /* ---------------- */
+
+    // Relevent components of matrix D (diagonal matrix)
+    std::vector<double> D = {2.0/3.0, -1.0/3.0, -1.0/3.0};
+    if (init_flavour != final_flavour) {
+        vals.push_back(0.0);
+    } else {
+        vals.push_back(D.at(init_flavour));
+    }
+
+    // Compute relevent T matrix component
+    double T_r = 0.0;
+    double T_i = 0.0;
+    if (init_flavour == final_flavour) {
+        if (init_flavour == 0) {
+            T_r = (2.0/3.0) * H_ee;
+        } else {
+            T_r = -(2.0/3.0) * (H_ee + H_r);
+        }
+    } else {
+        T_r = (1.0/3,0) * H_r;
+        T_i = (1.0/3,0) * H_i;
+        if ((init_flavour * final_flavour) != 0) {
+            T_r *= -(2.0/3.0);
+            T_i *= -(2.0/3.0);
+        }
+    }
+    vals.push_back(T_r);    vals.push_back(T_i);
+
+    return vals;
+}
+
+
 /* -------------------- SURVIVAL PROBS ----------------------- */
+
+double Oscillation_Prob(std::vector<std::vector<double>> consts, std::vector<std::vector<std::vector<double>>> vac_matrices,
+                        std::vector<std::vector<std::vector<double>>> T, double L, double E, double V,
+                        int init_flavour,int final_flavour, int anti) {
+
+    // Unpack constants
+    std::vector<double> a = consts.at(0);
+    std::vector<double> D = consts.at(1);
+    std::vector<std::vector<double>> H_r = vac_matrices.at(0);
+    std::vector<std::vector<double>> H_i = vac_matrices.at(1);
+    std::vector<std::vector<double>> Y_r = vac_matrices.at(2);
+    std::vector<std::vector<double>> Y_i = vac_matrices.at(3);
+    std::vector<std::vector<double>> T_r = T.at(0);
+    std::vector<std::vector<double>> T_i = T.at(1);
+
+    if (V != 0.0) {
+        Y_r.at(final_flavour).at(init_flavour)
+    }
+}
 
 
 /**
