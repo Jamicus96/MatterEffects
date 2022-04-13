@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
     for (unsigned int i = 0; i < N+1; ++i) {
         double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
         double P_vac = Oscillation_Prob_Vac(m21, m31, PMNS_values, L, E, init_flavour, final_flavour, anti);
-        double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1-e3, L, rho);   // flavours + 1 to mine, and energy in GeV
-        double P_vac_globes = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1-e3, L);             // flavours + 1 to mine, and energy in GeV
+        double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho);   // flavours + 1 to mine, and energy in GeV
+        double P_vac_globes = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L);             // flavours + 1 to mine, and energy in GeV
 
         // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
 
