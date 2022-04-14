@@ -6,22 +6,23 @@ import argparse
 import os
 
 
-# Optional input arguments
-# def argparser():
-#     parser = argparse.ArgumentParser(
-#         formatter_class=argparse.RawDescriptionHelpFormatter,
-#         description='Run matter effect neutrino oscillation in different modes.')
-#     parser.add_argument('--antinu', '-a', type=bool, dest='antinu', choices=[True, False],
-#                         default=False, help='True to simulate antineutrinos, False for neutrinos.')
-#     args = parser.parse_args()
+def argparser():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description='Run matter effect neutrino oscillation in different modes.')
+    parser.add_argument('--file', '-f', type=bool, dest='file',
+                        default='results.txt', help='Input file with simulation results.')
+    args = parser.parse_args()
 
-#     return args
+    return args
         
 
 
 def main():
+    args = argparser()
+
     # Read in results
-    f = open('results.txt', 'r')
+    f = open(args.file, 'r')
     data = np.loadtxt(f, skiprows=0)
 
     # neutrino info saved to one number (<anti><init_flavour><final_flavour>, as in <first digit><second digit><third digit>)
@@ -59,7 +60,7 @@ def main():
     if (anti[0] == 1):
         if (init_flavour == 0):
             if (final_flavour == 0):
-                plt.ylabel(r'$\nu_e \rightarrow \nu_e$ transition probability')
+                plt.ylabel(r'$\nu_e \rightarrow \nu_e$ survival probability')
             elif (final_flavour == 1):
                 plt.ylabel(r'$\nu_e \rightarrow \nu_\mu$ transition probability')
             else:
@@ -68,7 +69,7 @@ def main():
             if (final_flavour == 0):
                 plt.ylabel(r'$\nu_\mu \rightarrow \nu_e$ transition probability')
             elif (final_flavour == 1):
-                plt.ylabel(r'$\nu_\mu \rightarrow \nu_\mu$ transition probability')
+                plt.ylabel(r'$\nu_\mu \rightarrow \nu_\mu$ survival probability')
             else:
                 plt.ylabel(r'$\nu_\mu \rightarrow \nu_\tau$ transition probability')
         else:
@@ -77,11 +78,11 @@ def main():
             elif (final_flavour == 1):
                 plt.ylabel(r'$\nu_\tau \rightarrow \nu_\mu$ transition probability')
             else:
-                plt.ylabel(r'$\nu_\tau \rightarrow \nu_\tau$ transition probability')
+                plt.ylabel(r'$\nu_\tau \rightarrow \nu_\tau$ survival probability')
     else :
         if (init_flavour == 0):
             if (final_flavour == 0):
-                plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_e$ transition probability')
+                plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_e$ survival probability')
             elif (final_flavour == 1):
                 plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_\mu$ transition probability')
             else:
@@ -90,7 +91,7 @@ def main():
             if (final_flavour == 0):
                 plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_e$ transition probability')
             elif (final_flavour == 1):
-                plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\mu$ transition probability')
+                plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\mu$ survival probability')
             else:
                 plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\tau$ transition probability')
         else:
@@ -99,7 +100,7 @@ def main():
             elif (final_flavour == 1):
                 plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\mu$ transition probability')
             else:
-                plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\tau$ transition probability')
+                plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\tau$ survival probability')
 
     plt.show()
 
