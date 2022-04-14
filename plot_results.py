@@ -41,10 +41,10 @@ def main():
     # result = ((np.max(anti) == np.min(anti)) and (np.max(init_flavour) == np.min(init_flavour)) and (np.max(final_flavour) == np.min(final_flavour)))
 
     # Plotting
-    plt.plot(L, Pvac, label='Vacuum Case (my calc)')
-    plt.plot(L, P, label='With Matter Effects (my calc)', linestyle='dashed')
-    plt.plot(L, Pglobesvac, label='Vacuum Case (GLoBES)', linestyle='dashed')
-    plt.plot(L, Pglobes, label='With Matter Effects (GLoBES)', linestyle='dashed')
+    plt.plot(L, Pglobesvac, color='red', label='Vacuum Case (GLoBES)')
+    plt.plot(L, Pglobes, color='orange', label='With Matter Effects (GLoBES)')
+    plt.plot(L, Pvac, label='Vacuum Case (my calc)', color='green', linestyle='dashed')
+    plt.plot(L, P, label='With Matter Effects (my calc)', color='blue', linestyle='dashed')
     plt.xlabel("Baseline (km)")
     plt.legend(loc='best')
     Title = 'Comparing Survival Probability for {}MeV neutrino,\n\
