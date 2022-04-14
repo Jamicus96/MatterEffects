@@ -1,6 +1,7 @@
 ### RUN SURVIVAL PROB IN A LOOP AND PLOT ##
 
 import numpy as np
+import matplotlib.pyplot as plt
 import argparse
 import os
 
@@ -15,19 +16,18 @@ import os
 #     args = parser.parse_args()
 
 #     return args
+        
 
 
-def plot_results(L, E, rho):
-    ### IF PLOTTING ###
-    import matplotlib.pyplot as plt
+def main():
     # Read in results
     f = open('results.txt', 'r')
     data = np.loadtxt(f, skiprows=0)
 
     # neutrino info saved to one number (anti * <init_flavour><final_flavour>, as in <first digit><second digit>)
     anti = np.sign(data[:, 0])
-    final_flavour = np.abs(data[:, 0]) % 10
-    init_flavour = (np.abs(data[:, 0]) - final_flavour) / 10
+    final_flavour_lst = np.abs(data[:, 0]) % 10
+    init_flavour_lst = (np.abs(data[:, 0]) - final_flavour_lst) / 10
     E = data[:, 1]
     rho = data[:, 2]
     L = data[:, 3]
@@ -39,34 +39,66 @@ def plot_results(L, E, rho):
     # Check if all input oscillation is the same
     # result = ((np.max(anti) == np.min(anti)) and (np.max(init_flavour) == np.min(init_flavour)) and (np.max(final_flavour) == np.min(final_flavour)))
 
-    flavours = np.array(['e', '\mu', '\tau'])
-    if (anti == 1):
-        nu = '\nu_'
-    else :
-        nu = '\overline{\nu}_'
-    y_label = '$' + nu + flavours[int(init_flavour)] + ' \rightarrow ' + nu + flavours[int(final_flavour)] + '$ transition probability'
-
+    # Plotting
     plt.plot(L, Pvac, label='Vacuum Case (my calc)')
     plt.plot(L, P, label='With Matter Effects (my calc)', linestyle='dashed')
     plt.plot(L, Pglobesvac, label='Vacuum Case (GLoBES)', linestyle='dashed')
     plt.plot(L, Pglobes, label='With Matter Effects (GLoBES)', linestyle='dashed')
     plt.xlabel("Baseline (km)")
-    plt.ylabel(r'$\nu_' + flavours[int(init_flavour)] + ' \rightarrow \nu_' + flavours[int(final_flavour)] + '$ transition probability')
     plt.legend(loc='best')
     Title = 'Comparing Survival Probability for {}MeV neutrino,\n\
         with Matter Effects (constant density {}g/cm^3) to Vacuum Case'.format(E[0], rho[0])
     plt.title(Title)
     plt.show()
 
+    # Choose y label (assuming the same for all entries)
+    init_flavour = init_flavour_lst[0]
+    final_flavour = final_flavour_lst[0]
+    if (anti == 1):
+        if (init_flavour == 0):
+            if (final_flavour == 0):
+                plt.ylabel(r'$\nu_e \rightarrow \nu_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\nu_e \rightarrow \nu_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\nu_e \rightarrow \nu_\tau$ transition probability')
+        elif (init_flavour == 1):
+            if (final_flavour == 0):
+                plt.ylabel(r'$\nu_\mu \rightarrow \nu_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\nu_\mu \rightarrow \nu_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\nu_\mu \rightarrow \nu_\tau$ transition probability')
+        else:
+            if (final_flavour == 0):
+                plt.ylabel(r'$\nu_\tau \rightarrow \nu_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\nu_\tau \rightarrow \nu_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\nu_\tau \rightarrow \nu_\tau$ transition probability')
+    else :
+        if (init_flavour == 0):
+            if (final_flavour == 0):
+                plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_\tau$ transition probability')
+        elif (init_flavour == 1):
+            if (final_flavour == 0):
+                plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\tau$ transition probability')
+        else:
+            if (final_flavour == 0):
+                plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_e$ transition probability')
+            elif (final_flavour == 1):
+                plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\mu$ transition probability')
+            else:
+                plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\tau$ transition probability')
 
-def main():
-
-    # Run simulation
-    # Compute_oscillations(L, E, rho, args.antinu)
-
-    # Plot results, if desired
-    if args.plot:
-        plot_results(L, E, rho)
 
 
 if __name__ == '__main__':
