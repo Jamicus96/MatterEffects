@@ -218,8 +218,8 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
             T_r = -(2.0/3.0) * (H_ee + H_r);
         }
     } else {
-        T_r = (1.0/3,0) * H_r;
-        T_i = (1.0/3,0) * H_i;
+        T_r = (1.0/3.0) * H_r;
+        T_i = (1.0/3.0) * H_i;
         if ((init_flavour * final_flavour) != 0) {
             T_r *= -2.0;
             T_i *= -2.0;
