@@ -221,8 +221,8 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
         T_r = (1.0/3,0) * H_r;
         T_i = (1.0/3,0) * H_i;
         if ((init_flavour * final_flavour) != 0) {
-            T_r *= -(2.0/3.0);
-            T_i *= -(2.0/3.0);
+            T_r *= -2.0;
+            T_i *= -2.0;
         }
     }
     vals.push_back(T_r);    vals.push_back(T_i);
@@ -278,8 +278,8 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double A_CC = anti * 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
 
         // Correct constants for matter effects (D = 0 for transition prob)
-        a0 += -Y_ee * A_CC - (1.0/3.0) * H_ee * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
-        a1 += -H_ee * A_CC - (1.0/3.0) * A_CC*A_CC;
+        a0 -= Y_ee * A_CC + (1.0/3.0) * H_ee * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC;
+        a1 -= H_ee * A_CC + (1.0/3.0) * A_CC*A_CC;
         Y_r += A_CC * T_r + (1.0/3.0) * A_CC*A_CC * D;
         Y_i += A_CC * T_i;
         H_r += A_CC * D;
