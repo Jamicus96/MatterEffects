@@ -57,10 +57,10 @@ double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
 int main(int argc, char *argv[]) {
     // Read in arguments
     double E = atof(argv[1]); // MeV
-    double rho = atof(argv[5]); // g/cm^3
-    double L_min = atof(argv[2]); // km
-    double L_max = atof(argv[3]); // km
-    int N = atof(argv[4]); // number of data points between L_min and L_max
+    double rho = atof(argv[2]); // g/cm^3
+    double L_min = atof(argv[3]); // km
+    double L_max = atof(argv[4]); // km
+    int N = atof(argv[5]); // number of data points between L_min and L_max
     int init_flavour = atoi(argv[6]); // 0=e, 1=mu, 2=tau
     int final_flavour = atoi(argv[7]); // 0=e, 1=mu, 2=tau
     int anti = atoi(argv[8]); // -1 = antineutrino, 1 = neutrino
