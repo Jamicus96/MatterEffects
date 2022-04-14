@@ -10,7 +10,7 @@ def argparser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='Run matter effect neutrino oscillation in different modes.')
-    parser.add_argument('--file', '-f', type=bool, dest='file',
+    parser.add_argument('--file', '-f', type=str, dest='file',
                         default='results.txt', help='Input file with simulation results.')
     args = parser.parse_args()
 
@@ -54,9 +54,6 @@ def main():
     # Choose y label (assuming the same for all entries)
     init_flavour = init_flavour_lst[0]
     final_flavour = final_flavour_lst[0]
-    print(anti[0])
-    print(init_flavour)
-    print(final_flavour)
     if (anti[0] == 1):
         if (init_flavour == 0):
             if (final_flavour == 0):
