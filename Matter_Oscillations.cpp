@@ -31,8 +31,8 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
 // Specific flavour functions
 std::vector<double> anti_e_e_Survival_Prob_Constants();
 std::vector<double> mu_e_Transition_Prob_Constants();
-double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double L);
-double mu_e_Transition_Prob(double constants[8], double rho, double E, double L);
+double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
+double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, double L);
 
 /* ---------------------------- */
 /* ----- Global variables ----- */
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 
     // Initialise flavour specific constants
     std::vector<double> consts_anti_e_e = anti_e_e_Survival_Prob_Constants();
-    std::vector<double> consts_mu_e = mu_e_Transition_Prob();
+    std::vector<double> consts_mu_e = mu_e_Transition_Prob_Constants();
 
     // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
@@ -543,12 +543,10 @@ std::vector<double> anti_e_e_Survival_Prob_Constants() {
     consts.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
     consts.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31)); // a1
 
-    double H_ee = m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0));
-    double H_neq2 = c13*c13 * (m21*m21 * s12*s12 * (c12*c12 + s12*s12 * s13*s13) + m31*m31 * s13*s13
-                    - 2.0 * m21 * m31 * s12*s12 * s13*s13);
-    double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
-
-    consts.push_back(H_ee); consts.push_back(Y_ee);
+    consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
+    consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
+                                    + m31*m31 * (s13*s13 - (1.0/3.0))
+                                    + 2.0 * m21 * m31 * (c12*c12 * c13*c13 - (1.0/3.0)))); // Y_ee
 
     return consts;
 }
@@ -728,9 +726,6 @@ double mu_e_Transition_Prob(double constants[8], double rho, double E, double L)
     double s_10 = sin(Theta_10);
     double s_20 = sin(Theta_20);
     double s_21 = sin(Theta_21);
-
-    double anitInt = 1.0;
-    if(anti){anitInt = -1.0;}
 
     // Compute probability
     return - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
