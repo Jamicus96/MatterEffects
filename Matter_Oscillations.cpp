@@ -92,10 +92,10 @@ int main(int argc, char *argv[]) {
     double L_step = 0.0;
     if (N > 0) {L_step = (L_max - L_min) / N;}
     double L = L_min;
-    std::<double> P;
-    std::<double> P_vac;
-    std::<double> P_globes;
-    std::<double> P_vac_globes;
+    std::vector<double> P;
+    std::vector<double> P_vac;
+    std::vector<double> P_globes;
+    std::vector<double> P_vac_globes;
 
     auto t1 = std::chrono::high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
