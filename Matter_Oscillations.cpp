@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     // t2 = high_resolution_clock::now();
     // auto time_P_vac = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = high_resolution_clock::now();
+    // t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_globes.push_back(glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho));   // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         L += L_step; 
     }
     // t2 = high_resolution_clock::now();
-    auto time_P_vac_globes = duration_cast<microseconds>(t2 - t1).count();
+    // auto time_P_vac_globes = duration_cast<microseconds>(t2 - t1).count();
 
     // Print results to file
     L = L_min;
