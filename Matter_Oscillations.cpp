@@ -16,19 +16,21 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
-// #include <chrono>
 #include <ctime>
 #include <globes/globes.h>
 
-// using namespace std::chrono;
 
-
+// General flavour functions
 double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti);
 double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti);
 std::vector<std::vector<std::vector<double> > > calculate_PMNS();
 std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour);
+
+// Specific flavour functions
+double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double L);
+double mu_e_Transition_Prob(double constants[8], double rho, double E, double L);
 
 /* ---------------------------- */
 /* ----- Global variables ----- */
@@ -479,3 +481,150 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
 
     return P;
 }
+
+
+
+
+
+
+/* ----------------------- SPECIFIC FLAVOUR TRANSITIONS ----------------------------- */
+
+
+
+
+/**
+ * @brief Compute survival probability of anti-electron neutrinos, with matter effects.
+ * 
+ * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
+ *   constants[0] << H_ee_vac,
+ *   constants[1] << Y_vac,
+ *   constants[2] << a0_vac,
+ *   constants[3] << a1_vac,
+ * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
+ * @param E Antineutrino energy (MeV).
+ * @param L Baseline (km).
+ * @param anti true=antineutrino, false=neutrino.
+ * @return double 
+ */
+double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double L) {
+    // convert units to eV
+    E *= 1e6; //(MeV to eV)
+    L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
+
+    // Initialise constants with vacuum values
+    double H = constants[0];
+    double Y = constants[1];
+    double a0 = constants[2];
+    double a1 = constants[3];
+
+    // If not vacuum, make corrections
+    if(rho != 0.0){
+        double A_CC = -2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
+        // Compute new values for H_ee, Y, a0 and a1 (make sure and Y are updated after their use by others)
+        double alpha_1 = -H * A_CC - (1.0/3.0) * A_CC*A_CC;
+        a0 += -Y * A_CC - (1.0/3.0) * H * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
+        a1 += alpha_1;
+        Y -= (2.0/3.0) * alpha_1;
+        H += (2.0/3.0) * A_CC;
+    }
+
+
+    // Get eigenvalues of H, and constants X and theta
+    double eigen[3];
+    double X[3];
+
+    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(- 3.0 / a1));
+    double preFact = 2.0 * sqrt(- a1 / 3.0);
+
+    for(int i=0; i<3; ++i){
+        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+        X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] + a1);
+    }
+
+    double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
+    double s_20 = sin(((eigen[2] - eigen[0]) * L) / (4.0 * E));
+    double s_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
+
+
+    // Compute probability
+    return 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
+}
+
+
+/**
+ * @brief Compute transition probability of muon neutrinos to electron neutrinos,
+ * with matter effects.
+ * 
+ * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
+ *   constants[0] << H_ee_vac,
+ *   constants[1] << Y_vac,
+ *   constants[2] << a0_vac,
+ *   constants[3] << a1_vac,
+ *   constants[4] << R_H_em,
+ *   constants[5] << I_H_em,
+ *   constants[6] << R_Y_em,
+ *   constants[7] << I_Y_em,
+ * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
+ * @param E Neutrino energy (MeV).
+ * @param L Baseline (km).
+ * @return double 
+ */
+double mu_e_Transition_Prob(double constants[8], double rho, double E, double L) {
+    // convert units to eV
+    E *= 1e6; //(MeV to eV)
+    L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
+
+    // Initialise constants with vacuum values
+    double a0 = constants[2];
+    double a1 = constants[3];
+    double R_H_em = constants[4];
+    double I_H_em = constants[5];
+    double R_Y_em = constants[6];
+    double I_Y_em = constants[7];
+
+    // If not vacuum, make corrections
+    double A_CC = 0.0;
+    if(rho != 0.0){
+        double A_CC = 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
+        // Compute new values for a0 and a1
+        a0 += -constants[1] * A_CC - (1.0/3.0) * constants[0] * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
+        a1 += -constants[0] * A_CC - (1.0/3.0) * A_CC*A_CC;
+    }
+
+    // Get eigenvalues of H, and constants X and theta
+    double eigen[3];
+    double R_X[3];
+    double I_X[3];
+
+    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(- 3.0 / a1));
+    double preFact = 2.0 * sqrt(- a1 / 3.0);
+
+    for(int i=0; i<3; ++i){
+        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+        R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
+        I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] + a1);
+    }
+
+    double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
+    double Theta_20 = ((eigen[2] - eigen[0]) * L) / (2.0 * E);
+    double Theta_21 = ((eigen[2] - eigen[1]) * L) / (2.0 * E);
+
+    double s2_10 = sin(Theta_10 / 2.0);
+    double s2_20 = sin(Theta_20 / 2.0);
+    double s2_21 = sin(Theta_21 / 2.0);
+    double s_10 = sin(Theta_10);
+    double s_20 = sin(Theta_20);
+    double s_21 = sin(Theta_21);
+
+    double anitInt = 1.0;
+    if(anti){anitInt = -1.0;}
+
+    // Compute probability
+    return - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
+                  + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
+                  + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
+           + 2.0 * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
+                  + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
+                  + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21);
+}
+
