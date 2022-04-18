@@ -100,41 +100,41 @@ int main(int argc, char *argv[]) {
     std::vector<double> P_globes;
     std::vector<double> P_vac_globes;
 
-    // auto t1 = high_resolution_clock::now();
+    std::clock_t c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
         P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    // auto t2 = high_resolution_clock::now();
-    // auto time_P = duration_cast<microseconds>(t2 - t1).count();
+    std::clock_t c_end = std::clock();
+    double time_P = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
-    // t1 = high_resolution_clock::now();
+    c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac.push_back(Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    // t2 = high_resolution_clock::now();
-    // auto time_P_vac = duration_cast<microseconds>(t2 - t1).count();
+    std::clock_t c_end = std::clock();
+    double time_P_vac = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
-    // t1 = high_resolution_clock::now();
+    c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_globes.push_back(glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho));   // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
         L += L_step;
     }
-    // t2 = high_resolution_clock::now();
-    // auto time_P_globes = duration_cast<microseconds>(t2 - t1).count();
+    std::clock_t c_end = std::clock();
+    double time_P_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
-    // t1 = high_resolution_clock::now();
+    c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac_globes.push_back(glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L));             // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
         L += L_step; 
     }
-    // t2 = high_resolution_clock::now();
-    // auto time_P_vac_globes = duration_cast<microseconds>(t2 - t1).count();
+    std::clock_t c_end = std::clock();
+    double time_P_vac_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 
     // Print results to file
     L = L_min;
@@ -145,10 +145,10 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
 
-    // std::cout << "time_P = " << time_P << "microseconds" << std::endl;
-    // std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
-    // std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
-    // std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
+    std::cout << "time_P = " << time_P << "microseconds" << std::endl;
+    std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
+    std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
+    std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
 
     return 0;
 }
