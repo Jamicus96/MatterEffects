@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
     std::clock_t c_end = std::clock();
-    double time_P = 1000.0 * (double)(c_end - c_start) / (double)CLOCKS_PER_SEC;
+    long double time_P = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
     c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
     c_end = std::clock();
-    double time_P_vac = 1000.0 * (double)(c_end - c_start) / (double)CLOCKS_PER_SEC;
+    long double time_P_vac = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
     c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
     c_end = std::clock();
-    double time_P_globes = 1000.0 * (double)(c_end - c_start) / (double)CLOCKS_PER_SEC;
+    long double time_P_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     L = L_min;
     c_start = std::clock();
     for (unsigned int i = 0; i < N+1; ++i) {
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
         L += L_step; 
     }
     c_end = std::clock();
-    double time_P_vac_globes = 1000.0 * (double)(c_end - c_start) / (double)CLOCKS_PER_SEC;
+    long double time_P_vac_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 
     // Print results to file
     L = L_min;
