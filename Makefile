@@ -16,11 +16,14 @@ TXT = results.txt
 
 all: $(BIN)
 
-Matter_Oscillations.exe: Matter_Oscillations.o
-	g++ -std=c++11 Matter_Oscillations.o -o Matter_Oscillations.exe $(LDFLAGS) $(local_LDFLAGS)
+# Matter_Oscillations.exe: Matter_Oscillations.o
+# 	g++ -std=c++11 Matter_Oscillations.o -o Matter_Oscillations.exe $(LDFLAGS) $(local_LDFLAGS)
 
-%.o : %.cpp
-	g++ -c $< $(INCFLAGS)
+# %.o : %.cpp
+# 	g++ -c $< $(INCFLAGS)
+
+Matter_Oscillations.exe: Matter_Oscillations.cpp
+	g++ -std=c++11 Matter_Oscillations.cpp -o Matter_Oscillations.exe $(INCFLAGS) $(LDFLAGS) $(local_LDFLAGS)
 
 clean:
 	rm -f $(BIN) $(OBJ) $(TXT)
