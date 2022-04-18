@@ -16,6 +16,7 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
+#include <chrono>
 #include <globes/globes.h>
 
 
@@ -84,26 +85,67 @@ int main(int argc, char *argv[]) {
     datafile.open("results.txt", std::ios::app);
 
     // Compute oscillation probabilities via various methods, for various baselines
+    // And record calculation time
     if (N < 0) {
         std::cout << "Number of datapoints N must be at least 0, not " << N << std::cout;
     }
     double L_step = 0.0;
     if (N > 0) {L_step = (L_max - L_min) / N;}
     double L = L_min;
+    std::<double> P;
+    std::<double> P_vac;
+    std::<double> P_globes;
+    std::<double> P_vac_globes;
+
+    auto t1 = std::chrono::high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
-        double P = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
-        double P_vac = Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti);
-        double P_globes = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho);   // flavours + 1 to mine, and energy in GeV
-        double P_vac_globes = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L);             // flavours + 1 to mine, and energy in GeV
-
-        // std::cout << "P = " << P << ", P_vac = " << P_vac << ", P_globes = " << P_globes << std::endl;
-
-        // Print results to file
-        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L
-                 << " " << P << " " << P_vac << " " << P_globes << " " << P_vac_globes << std::endl;
+        P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto time_P = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    L = L_min;
+    t1 = std::chrono::high_resolution_clock::now();
+    for (unsigned int i = 0; i < N+1; ++i) {
+        P_vac.push_back(Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti));
+        // Step baseline forward
+        L += L_step;
+    }
+    t2 = std::chrono::high_resolution_clock::now();
+    auto time_P_vac = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    L = L_min;
+    t1 = std::chrono::high_resolution_clock::now();
+    for (unsigned int i = 0; i < N+1; ++i) {
+        P_globes.push_back(glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho));   // flavours + 1 to mine, and energy in GeV
+        // Step baseline forward
+        L += L_step;
+    }
+    t2 = std::chrono::high_resolution_clock::now();
+    auto time_P_globes = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    L = L_min;
+    t1 = std::chrono::high_resolution_clock::now();
+    for (unsigned int i = 0; i < N+1; ++i) {
+        P_vac_globes.push_back(glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L));             // flavours + 1 to mine, and energy in GeV
+        // Step baseline forward
+        L += L_step; 
+    }
+    t2 = std::chrono::high_resolution_clock::now();
+    auto time_P_vac_globes = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+    // Print results to file
+    L = L_min;
+    for (unsigned int i = 0; i < N+1; ++i) {
+        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L
+                 << " " << P.at(i) << " " << P_vac.at(i) << " " << P_globes.at(i) << " " << P_vac_globes.at(i) << std::endl;
+        // Step baseline forward
+        L += L_step;
+    }
+
+    std::cout << "time_P = " << time_P << "microseconds" << std::endl;
+    std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
+    std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
+    std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
 
     return 0;
 }
@@ -280,9 +322,14 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         // Correct constants for matter effects (D = 0 for transition prob)
         a0 -= Y_ee * A_CC + (1.0/3.0) * H_ee * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC;
         a1 -= H_ee * A_CC + (1.0/3.0) * A_CC*A_CC;
-        Y_r += A_CC * T_r + (1.0/3.0) * A_CC*A_CC * D;
-        Y_i += A_CC * T_i;
-        H_r += A_CC * D;
+        Y_r += A_CC * T_r;
+
+        if (init_flavour == final_flavour) {
+            Y_r += (1.0/3.0) * A_CC*A_CC * D;
+            H_r += A_CC * D;
+        } else {
+            Y_i += A_CC * T_i;
+        }
     }
 
     // Different cases for survival and transition probabilities
