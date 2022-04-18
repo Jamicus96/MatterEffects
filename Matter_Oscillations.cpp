@@ -542,7 +542,6 @@ std::vector<double> anti_e_e_Survival_Prob_Constants() {
     std::vector<double> consts;
     consts.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
     consts.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31)); // a1
-
     consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
     consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
                                     + m31*m31 * (s13*s13 - (1.0/3.0))
@@ -569,13 +568,10 @@ std::vector<double> mu_e_Transition_Prob_Constants() {
     std::vector<double> consts;
     consts.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
     consts.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31)); // a1
-
-    double H_ee = m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0));
-    double H_neq2 = c13*c13 * (m21*m21 * s12*s12 * (c12*c12 + s12*s12 * s13*s13) + m31*m31 * s13*s13
-                    - 2.0 * m21 * m31 * s12*s12 * s13*s13);
-    double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
-
-    consts.push_back(H_ee); consts.push_back(Y_ee);
+    consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
+    consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
+                                    + m31*m31 * (s13*s13 - (1.0/3.0))
+                                    + 2.0 * m21 * m31 * (c12*c12 * c13*c13 - (1.0/3.0)))); // Y_ee
 
     /*~~~~~~~~ mu -> e Extra stuff ~~~~~~~~~*/
 
