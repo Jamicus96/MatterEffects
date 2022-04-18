@@ -23,7 +23,7 @@ all: $(BIN)
 # 	g++ -c $< $(INCFLAGS)
 
 Matter_Oscillations.exe: Matter_Oscillations.cpp
-	g++ -g -W -Wall -std=c++1y Matter_Oscillations.cpp -o Matter_Oscillations.exe $(INCFLAGS) $(LDFLAGS) $(local_LDFLAGS) `root-config --cflags --libs` -I${RATROOT}/include/libpq -I${RATROOT}/include -I${RATROOT}/include/external -L${RATROOT}/lib -lRATEvent_Linux
+	g++ -g -W -Wall -std=c++1y Matter_Oscillations.cpp -o Matter_Oscillations.exe -c $< $(INCFLAGS) $(LDFLAGS) $(local_LDFLAGS)
 
 clean:
 	rm -f $(BIN) $(OBJ) $(TXT)
