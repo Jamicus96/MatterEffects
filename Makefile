@@ -23,7 +23,7 @@ all: $(BIN)
 # 	g++ -c $< $(INCFLAGS)
 
 Matter_Oscillations.exe: Matter_Oscillations.cpp
-	g++ -std=c++11 Matter_Oscillations.cpp -o Matter_Oscillations.exe $(INCFLAGS) $(LDFLAGS) $(local_LDFLAGS)
+	g++ -g -W -Wall -std=c++1y Matter_Oscillations.cpp -o Matter_Oscillations.exe $(INCFLAGS) $(LDFLAGS) $(local_LDFLAGS)
 
 clean:
 	rm -f $(BIN) $(OBJ) $(TXT)
