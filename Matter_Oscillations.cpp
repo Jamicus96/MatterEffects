@@ -97,14 +97,14 @@ int main(int argc, char *argv[]) {
     std::vector<double> P_globes;
     std::vector<double> P_vac_globes;
 
-    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::auto t1 = std::chrono::high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto time_P = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    std::chrono::auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::auto time_P = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     L = L_min;
     t1 = std::chrono::high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
