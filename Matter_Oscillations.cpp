@@ -613,7 +613,7 @@ std::vector<double> mu_e_Transition_Prob_Constants() {
  * @param anti true=antineutrino, false=neutrino.
  * @return double 
  */
-double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double L) {
+double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, double L) {
     // convert units to eV
     E *= 1e6; //(MeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
@@ -676,7 +676,7 @@ double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double 
  * @param L Baseline (km).
  * @return double 
  */
-double mu_e_Transition_Prob(double constants[8], double rho, double E, double L) {
+double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, double L) {
     // convert units to eV
     E *= 1e6; //(MeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
