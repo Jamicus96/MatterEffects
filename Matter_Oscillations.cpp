@@ -29,6 +29,8 @@ std::vector<std::vector<std::vector<double> > > calculate_PMNS();
 std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour);
 
 // Specific flavour functions
+std::vector<double> anti_e_e_Survival_Prob_Constants();
+std::vector<double> mu_e_Transition_Prob_Constants();
 double anti_e_e_Survival_Prob(double constants[4], double rho, double E, double L);
 double mu_e_Transition_Prob(double constants[8], double rho, double E, double L);
 
@@ -75,8 +77,12 @@ int main(int argc, char *argv[]) {
     // which I would definitely for one harcoded flavour transition)
     std::vector<std::vector<std::vector<double> > > U_PMNS = calculate_PMNS();
 
-    // Initialse my algorithm with pre-loop constants
+    // Initialise my algorithm with pre-loop constants
     std::vector<double> consts = compute_constants(U_PMNS, init_flavour,final_flavour);
+
+    // Initialise flavour specific constants
+    std::vector<double> consts_anti_e_e = anti_e_e_Survival_Prob_Constants();
+    std::vector<double> consts_mu_e = mu_e_Transition_Prob();
 
     // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
@@ -138,6 +144,28 @@ int main(int argc, char *argv[]) {
     c_end = std::clock();
     long double time_P_vac_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 
+    // Flavour specific transitions
+    std::vector<double> P_anti_e_e;
+    std::vector<double> P_mu_e;
+    L = L_min;
+    c_start = std::clock();
+    for (unsigned int i = 0; i < N+1; ++i) {
+        P_anti_e_e.push_back(anti_e_e_Survival_Prob(consts_anti_e_e, rho, E, L));
+        // Step baseline forward
+        L += L_step; 
+    }
+    c_end = std::clock();
+    long double time_P_anti_e_e = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+    L = L_min;
+    c_start = std::clock();
+    for (unsigned int i = 0; i < N+1; ++i) {
+        P_mu_e.push_back(mu_e_Transition_Prob(consts_mu_e, rho, E, L));
+        // Step baseline forward
+        L += L_step; 
+    }
+    c_end = std::clock();
+    long double time_P_mu_e = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+
     // Print results to file
     L = L_min;
     for (unsigned int i = 0; i < N+1; ++i) {
@@ -151,6 +179,8 @@ int main(int argc, char *argv[]) {
     std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
     std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
     std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
+    std::cout << "time_P_anti_e_e = " << time_P_anti_e_e << "microseconds" << std::endl;
+    std::cout << "time_P_mu_e = " << time_P_mu_e << "microseconds" << std::endl;
 
     return 0;
 }
@@ -486,11 +516,94 @@ double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PM
 
 
 
-
+/* ---------------------------------------------------------------------------------- */
 /* ----------------------- SPECIFIC FLAVOUR TRANSITIONS ----------------------------- */
+/* ---------------------------------------------------------------------------------- */
 
 
 
+/* ----------------- Constant functions -------------------- */
+
+/**
+ * @brief Computes constants needed for anti-electron neutrino survival probability fuinction.
+ * 
+ * @return std::vector<double> = {a0, a1, H_ee, Y_ee}
+ */
+std::vector<double> anti_e_e_Survival_Prob_Constants() {
+    // Useful constants
+    double s12 = std::sin(theta12);
+    double s13 = std::sin(theta13);
+    double s23 = std::sin(theta23);
+    double c12 = std::cos(theta12);
+    double c13 = std::cos(theta13);
+    double c23 = std::cos(theta23);
+
+    // Compute vacuum constants
+    std::vector<double> consts;
+    consts.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    consts.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31)); // a1
+
+    double H_ee = m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0));
+    double H_neq2 = c13*c13 * (m21*m21 * s12*s12 * (c12*c12 + s12*s12 * s13*s13) + m31*m31 * s13*s13
+                    - 2.0 * m21 * m31 * s12*s12 * s13*s13);
+    double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
+
+    consts.push_back(H_ee); consts.push_back(Y_ee);
+
+    return consts;
+}
+
+/**
+ * @brief Computes constants needed for muon neutrino to electron neutrino transition probability fuinction.
+ * 
+ * @return std::vector<double> = {a0, a1, H_ee, Y_ee, R[H_em], I[H_em], R[Y_em], I[Y_em]}
+ */
+std::vector<double> mu_e_Transition_Prob_Constants() {
+    // Useful constants
+    double s12 = std::sin(theta12);
+    double s13 = std::sin(theta13);
+    double s23 = std::sin(theta23);
+    double c12 = std::cos(theta12);
+    double c13 = std::cos(theta13);
+    double c23 = std::cos(theta23);
+
+    // Compute vacuum constants
+    std::vector<double> consts;
+    consts.push_back(- (2.0/27.0) * (m21*m21*m21 + m31*m31*m31) + (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    consts.push_back((1.0/3.0) * (m21 * m31 - m21*m21 - m31*m31)); // a1
+
+    double H_ee = m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0));
+    double H_neq2 = c13*c13 * (m21*m21 * s12*s12 * (c12*c12 + s12*s12 * s13*s13) + m31*m31 * s13*s13
+                    - 2.0 * m21 * m31 * s12*s12 * s13*s13);
+    double Y_ee = (2.0/3.0) * a1 + H_ee*H_ee + H_neq2;
+
+    consts.push_back(H_ee); consts.push_back(Y_ee);
+
+    /*~~~~~~~~ mu -> e Extra stuff ~~~~~~~~~*/
+
+    double delta = 1.36 * M_PI;
+    double c_delta = cos(delta);
+    double s_delta = sin(delta);
+
+    consts.push_back(m21 * s12 * c13 * (c12 * c23 - s12 * s23 * s13 * c_delta)
+                    + m31 * s13 * s23 * c13 * c_delta); // R[H_em]
+    consts.push_back(m21 * s12*s12 * s13 * s23 * c13 * s_delta - m31 * s13 * s23 * c13 * s_delta); // I[H_em]
+
+    double R_X2 = (1.0/3.0) * s12 * c13 * (c12 * c23 - s12 * s13 * s23 * c_delta);
+    double R_X3 = (1.0 / 3.0) * s13 * s23 * c13 * c_delta;
+    double R_X23 = - (2.0/3.0) * c12 * c13 * (s12 * c23 + s13 * s23 * c12 * c_delta);
+    consts.push_back(m21*m21 * R_X2 + m31*m31 * R_X3 + m21 * m31 * R_X23); // R[Y_em]
+
+    double I_X2 = (1.0/3.0) * s12*s12 * s13 * s23 * c13 * s_delta;
+    double I_X3 = - (1.0 / 3.0) * s13 * s23 * c13 * s_delta;
+    double I_X23 = (2.0/3.0) * s13 * s23 * c12*c12 * c13 * s_delta; 
+    consts.push_back(m21*m21 * I_X2 + m31*m31 * I_X3 + m21 * m31 * I_X23); // I[Y_em]
+
+    return consts;
+}
+
+
+/* ------------------ Oscillations Functions ----------------- */
 
 /**
  * @brief Compute survival probability of anti-electron neutrinos, with matter effects.
