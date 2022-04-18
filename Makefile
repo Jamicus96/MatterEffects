@@ -20,7 +20,7 @@ Matter_Oscillations.exe: Matter_Oscillations.o
 	g++ -std=c++11 Matter_Oscillations.o -o Matter_Oscillations.exe $(LDFLAGS) $(local_LDFLAGS)
 
 %.o : %.cpp
-	g++ -std=c++11 -c $< $(INCFLAGS)
+	g++ -c $< $(INCFLAGS)
 
 clean:
 	rm -f $(BIN) $(OBJ) $(TXT)

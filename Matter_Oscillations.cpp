@@ -19,6 +19,8 @@
 #include <chrono>
 #include <globes/globes.h>
 
+using namespace std::chrono;
+
 
 double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti);
@@ -97,41 +99,41 @@ int main(int argc, char *argv[]) {
     std::vector<double> P_globes;
     std::vector<double> P_vac_globes;
 
-    std::chrono::auto t1 = std::chrono::high_resolution_clock::now();
+    auto t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    std::chrono::auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::auto time_P = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    auto t2 = high_resolution_clock::now();
+    auto time_P = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = std::chrono::high_resolution_clock::now();
+    t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac.push_back(Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    auto time_P_vac = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    t2 = high_resolution_clock::now();
+    auto time_P_vac = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = std::chrono::high_resolution_clock::now();
+    t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_globes.push_back(glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho));   // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
         L += L_step;
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    auto time_P_globes = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    t2 = high_resolution_clock::now();
+    auto time_P_globes = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = std::chrono::high_resolution_clock::now();
+    t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac_globes.push_back(glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L));             // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
         L += L_step; 
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    auto time_P_vac_globes = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    t2 = high_resolution_clock::now();
+    auto time_P_vac_globes = duration_cast<microseconds>(t2 - t1).count();
 
     // Print results to file
     L = L_min;
