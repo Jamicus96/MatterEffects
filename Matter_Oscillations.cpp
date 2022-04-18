@@ -19,7 +19,7 @@
 #include <chrono>
 #include <globes/globes.h>
 
-using namespace std::chrono;
+// using namespace std::chrono;
 
 
 double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
@@ -99,23 +99,23 @@ int main(int argc, char *argv[]) {
     std::vector<double> P_globes;
     std::vector<double> P_vac_globes;
 
-    auto t1 = high_resolution_clock::now();
+    // auto t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    auto t2 = high_resolution_clock::now();
-    auto time_P = duration_cast<microseconds>(t2 - t1).count();
+    // auto t2 = high_resolution_clock::now();
+    // auto time_P = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = high_resolution_clock::now();
+    // t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac.push_back(Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti));
         // Step baseline forward
         L += L_step;
     }
-    t2 = high_resolution_clock::now();
-    auto time_P_vac = duration_cast<microseconds>(t2 - t1).count();
+    // t2 = high_resolution_clock::now();
+    // auto time_P_vac = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
     t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
@@ -123,16 +123,16 @@ int main(int argc, char *argv[]) {
         // Step baseline forward
         L += L_step;
     }
-    t2 = high_resolution_clock::now();
-    auto time_P_globes = duration_cast<microseconds>(t2 - t1).count();
+    // t2 = high_resolution_clock::now();
+    // auto time_P_globes = duration_cast<microseconds>(t2 - t1).count();
     L = L_min;
-    t1 = high_resolution_clock::now();
+    // t1 = high_resolution_clock::now();
     for (unsigned int i = 0; i < N+1; ++i) {
         P_vac_globes.push_back(glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L));             // flavours + 1 to mine, and energy in GeV
         // Step baseline forward
         L += L_step; 
     }
-    t2 = high_resolution_clock::now();
+    // t2 = high_resolution_clock::now();
     auto time_P_vac_globes = duration_cast<microseconds>(t2 - t1).count();
 
     // Print results to file
@@ -144,10 +144,10 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
 
-    std::cout << "time_P = " << time_P << "microseconds" << std::endl;
-    std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
-    std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
-    std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
+    // std::cout << "time_P = " << time_P << "microseconds" << std::endl;
+    // std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
+    // std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
+    // std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
 
     return 0;
 }
