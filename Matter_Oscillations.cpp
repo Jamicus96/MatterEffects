@@ -619,10 +619,10 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Initialise constants with vacuum values
-    double H = constants.at(0);
-    double Y = constants.at(1);
-    double a0 = constants.at(2);
-    double a1 = constants.at(3);
+    double H = consts.at(0);
+    double Y = consts.at(1);
+    double a0 = consts.at(2);
+    double a1 = consts.at(3);
 
     // If not vacuum, make corrections
     if(rho != 0.0){
@@ -682,20 +682,20 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Initialise constants with vacuum values
-    double a0 = constants.at(2);
-    double a1 = constants.at(3);
-    double R_H_em = constants.at(4);
-    double I_H_em = constants.at(5);
-    double R_Y_em = constants.at(6);
-    double I_Y_em = constants.at(7);
+    double a0 = consts.at(2);
+    double a1 = consts.at(3);
+    double R_H_em = consts.at(4);
+    double I_H_em = consts.at(5);
+    double R_Y_em = consts.at(6);
+    double I_Y_em = consts.at(7);
 
     // If not vacuum, make corrections
     double A_CC = 0.0;
     if(rho != 0.0){
         double A_CC = 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
         // Compute new values for a0 and a1
-        a0 += -constants.at(1) * A_CC - (1.0/3.0) * constants.at(0) * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
-        a1 += -constants.at(0) * A_CC - (1.0/3.0) * A_CC*A_CC;
+        a0 += -consts.at(1) * A_CC - (1.0/3.0) * consts.at(0) * A_CC*A_CC - (2.0/27.0) * A_CC*A_CC*A_CC;
+        a1 += -consts.at(0) * A_CC - (1.0/3.0) * A_CC*A_CC;
     }
 
     // Get eigenvalues of H, and constants X and theta
