@@ -601,9 +601,7 @@ std::vector<double> mu_mu_Survival_Prob_Constants() {
 
     /*~~~~~~~~ mu -> mu Extra stuff ~~~~~~~~~*/
 
-    double delta = 1.36 * M_PI;
     double c_delta = cos(delta);
-    double s_delta = sin(delta);
 
     consts.push_back(m21 * (c12*c12 * c23*c23 + s12*s12 * s13*s13 * s23*s23 - 2.0 * s12 * s13 * s23 * c12 * c23 * c_delta - (1.0/3.0))
                    + m31 * (s23*s23 * c13*c13 - (1.0/3.0))); // H_mm
@@ -639,7 +637,6 @@ std::vector<double> mu_e_Transition_Prob_Constants() {
 
     /*~~~~~~~~ mu -> e Extra stuff ~~~~~~~~~*/
 
-    double delta = 1.36 * M_PI;
     double c_delta = cos(delta);
     double s_delta = sin(delta);
 
@@ -737,10 +734,8 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
     // Initialise constants with vacuum values
     double a0 = consts.at(0);
     double a1 = consts.at(1);
-    // double H_ee = consts.at(2);
-    // double Y_ee = consts.at(3);
-    double H_mm = consts.at(2);
-    double Y_mm = consts.at(3);
+    double H_mm = consts.at(4);
+    double Y_mm = consts.at(5);
 
     // If not vacuum, make corrections
     if(rho != 0.0){
