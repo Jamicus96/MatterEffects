@@ -402,7 +402,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // Different cases for survival and transition probabilities
     double P;
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
     double preFact = FACTOR * sqrt(a1);
 
     if (init_flavour == final_flavour) {
@@ -697,7 +697,7 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
     double preFact = FACTOR * sqrt(a1);
 
     for(int i=0; i<3; ++i){
@@ -751,7 +751,7 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
     double preFact = FACTOR * sqrt(a1);
 
     for(int i=0; i<3; ++i){
@@ -806,7 +806,7 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     double R_X[3];
     double I_X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
     double preFact = FACTOR * sqrt(a1);
 
     for(int i=0; i<3; ++i){
