@@ -85,17 +85,16 @@ int main(int argc, char *argv[]) {
     std::vector<double> consts = compute_constants(U_PMNS, init_flavour,final_flavour);
 
     // Initialise flavour specific constants
-    std::vector<double> consts_specific;
     bool specific = false;
     if (init_flavour == 0 && final_flavour == 0 && anti == -1) {
-        consts_specific = e_e_Survival_Prob_Constants();
+        std::vector<double> consts_specific = e_e_Survival_Prob_Constants();
         specific = true;
     } else if (init_flavour == 1 && anti == 1) {
         if (final_flavour == 1) {
-            consts_specific = m_m_Survival_Prob_Constants;
+            std::vector<double> consts_specific = m_m_Survival_Prob_Constants;
             specific = true;
         } else if (final_flavour == 0) {
-            consts_specific = mu_e_Transition_Prob_Constants();
+            std::vector<double> consts_specific = mu_e_Transition_Prob_Constants();
             specific = true;
         }
     }
