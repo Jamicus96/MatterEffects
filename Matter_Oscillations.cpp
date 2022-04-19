@@ -51,13 +51,17 @@ double GLB_Ne_MANTLE_ = 0.5;     /* Effective electron numbers for calculation *
 double GLB_EV_TO_KM_FACTOR_ = 1.9747235e-10;
 
 // Oscillation constants
-double theta12 = std::asin(std::sqrt(0.307));
-double theta13 = std::asin(std::sqrt(2.18e-2));
-double theta23 = std::asin(std::sqrt(0.545));     // Normal Hierarchy
+double theta12 = std::asin(sqrt(0.307));
+double theta13 = std::asin(sqrt(2.18e-2));
+double theta23 = std::asin(sqrt(0.545));     // Normal Hierarchy
 // double theta23 = np.arcsin(np.sqrt(0.547));  // Inverted Hierarchy
 double delta = 1.36 * M_PI;                     // Not sure about the hierarchy (NH I think here)
 double m21 = 7.53e-5;                           // (Delta m_21^2, in eV^2)
 double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
+
+// Extra constants
+double PHASE = (2.0/3.0) * M_PI;
+double FACTOR = (2.0 / sqrt(3.0));
 
 
 /* ---------------------------- */
@@ -398,15 +402,15 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // Different cases for survival and transition probabilities
     double P;
-    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(3.0 / a1));
-    double preFact = 2.0 * sqrt(a1 / 3.0);
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double preFact = FACTOR * sqrt(a1);
 
     if (init_flavour == final_flavour) {
         // Get eigenvalues of H, and constants X
         double eigen[3];
         double X[3];
         for(int i=0; i<3; ++i){
-            eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+            eigen[i] = preFact * cos(arcCos - PHASE * i);
             X[i] = (1.0/3.0) + (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] - a1);
         }
 
@@ -693,11 +697,11 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(3.0 / a1));
-    double preFact = 2.0 * sqrt(a1 / 3.0);
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double preFact = FACTOR * sqrt(a1);
 
     for(int i=0; i<3; ++i){
-        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+        eigen[i] = preFact * cos(arcCos - PHASE * i);
         X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] - a1);
     }
 
@@ -747,11 +751,11 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(3.0 / a1));
-    double preFact = 2.0 * sqrt(a1 / 3.0);
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double preFact = FACTOR * sqrt(a1);
 
-    for(int i=0; i<3; ++i) {
-        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+    for(int i=0; i<3; ++i){
+        eigen[i] = preFact * cos(arcCos - PHASE * i);
         X[i] = (1.0/3.0) + (eigen[i] * H_mm + Y_mm) / (3.0 * eigen[i]*eigen[i] - a1);
     }
 
@@ -802,11 +806,11 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     double R_X[3];
     double I_X[3];
 
-    double arcCos = (1.0/3.0) * acos(1.5 * (a0/a1) * sqrt(3.0 / a1));
-    double preFact = 2.0 * sqrt(a1 / 3.0);
+    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1)));
+    double preFact = FACTOR * sqrt(a1);
 
     for(int i=0; i<3; ++i){
-        eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
+        eigen[i] = preFact * cos(arcCos - PHASE * i);
         R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] - a1);
         I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] - a1);
     }
