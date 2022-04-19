@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     // Initialise flavour specific constants
     std::vector<double> consts_e_e = e_e_Survival_Prob_Constants();
-    std::vector<double> consts_m_m = mu_mu_Survival_Prob_Constants;
+    std::vector<double> consts_m_m = mu_mu_Survival_Prob_Constants();
     std::vector<double> consts_m_e = mu_e_Transition_Prob_Constants();
 
     // Initialise GLoBES
