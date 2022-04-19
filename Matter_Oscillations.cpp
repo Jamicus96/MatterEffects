@@ -204,12 +204,12 @@ int main(int argc, char *argv[]) {
         L += L_step;
     }
 
-    std::cout << "time_P = " << time_P << "microseconds" << std::endl;
-    std::cout << "time_P_vac = " << time_P_vac << "microseconds" << std::endl;
-    std::cout << "time_P_globes = " << time_P_globes << "microseconds" << std::endl;
-    std::cout << "time_P_vac_globes = " << time_P_vac_globes << "microseconds" << std::endl;
+    std::cout << "time_P = " << time_P << " microseconds" << std::endl;
+    std::cout << "time_P_vac = " << time_P_vac << " microseconds" << std::endl;
+    std::cout << "time_P_globes = " << time_P_globes << " microseconds" << std::endl;
+    std::cout << "time_P_vac_globes = " << time_P_vac_globes << " microseconds" << std::endl;
     if (specific) {
-        std::cout << "time_P_specific = " << time_P_specific << "microseconds" << std::endl;
+        std::cout << "time_P_specific = " << time_P_specific << " microseconds" << std::endl;
     }
 
     return 0;
