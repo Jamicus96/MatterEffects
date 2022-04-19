@@ -30,10 +30,10 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
 
 // Specific flavour functions
 std::vector<double> e_e_Survival_Prob_Constants();
-std::vector<double> m_m_Survival_Prob_Constants();
+std::vector<double> mu_mu_Survival_Prob_Constants();
 std::vector<double> mu_e_Transition_Prob_Constants();
 double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
-double m_m_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
+double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
 double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, double L);
 
 /* ---------------------------- */
@@ -85,19 +85,9 @@ int main(int argc, char *argv[]) {
     std::vector<double> consts = compute_constants(U_PMNS, init_flavour,final_flavour);
 
     // Initialise flavour specific constants
-    bool specific = false;
-    if (init_flavour == 0 && final_flavour == 0 && anti == -1) {
-        std::vector<double> consts_specific = e_e_Survival_Prob_Constants();
-        specific = true;
-    } else if (init_flavour == 1 && anti == 1) {
-        if (final_flavour == 1) {
-            std::vector<double> consts_specific = m_m_Survival_Prob_Constants;
-            specific = true;
-        } else if (final_flavour == 0) {
-            std::vector<double> consts_specific = mu_e_Transition_Prob_Constants();
-            specific = true;
-        }
-    }
+    std::vector<double> consts_e_e = e_e_Survival_Prob_Constants();
+    std::vector<double> consts_m_m = mu_mu_Survival_Prob_Constants;
+    std::vector<double> consts_m_e = mu_e_Transition_Prob_Constants();
 
     // Initialise GLoBES
     glbInit(argv[0]); /* Initialize GLoBES library */
@@ -164,29 +154,33 @@ int main(int argc, char *argv[]) {
     /* ---------------------------------------------------------- */
 
     // Flavour specific transitions
+    bool specific = false;
     std::vector<double> P_specific;
     L = L_min;
     if (init_flavour == 0 && final_flavour == 0 && anti == -1) {
+        specific = true;
         c_start = std::clock();
         for (unsigned int i = 0; i < N+1; ++i) {
-            P_specific.push_back(anti_e_e_Survival_Prob(consts_specific, rho, E, L));
+            P_specific.push_back(anti_e_e_Survival_Prob(consts_e_e, rho, E, L));
             // Step baseline forward
             L += L_step; 
         }
         c_end = std::clock();
     } else if (init_flavour == 1 && anti == 1) {
         if (final_flavour == 1) {
+            specific = true;
             c_start = std::clock();
             for (unsigned int i = 0; i < N+1; ++i) {
-                P_specific.push_back(m_m_Survival_Prob(consts_specific, rho, E, L));
+                P_specific.push_back(mu_mu_Survival_Prob(consts_m_m, rho, E, L));
                 // Step baseline forward
                 L += L_step; 
             }
             c_end = std::clock();
         } else if (final_flavour == 0) {
+            specific = true;
             c_start = std::clock();
             for (unsigned int i = 0; i < N+1; ++i) {
-                P_specific.push_back(mu_e_Transition_Prob(consts_specific, rho, E, L));
+                P_specific.push_back(mu_e_Transition_Prob(consts_m_e, rho, E, L));
                 // Step baseline forward
                 L += L_step; 
             }
@@ -587,7 +581,7 @@ std::vector<double> e_e_Survival_Prob_Constants() {
  * 
  * @return std::vector<double> = {a0, a1, H_ee, Y_ee, H_mm, Y_mm}
  */
-std::vector<double> m_m_Survival_Prob_Constants() {
+std::vector<double> mu_mu_Survival_Prob_Constants() {
     // Useful constants
     double s12 = std::sin(theta12);
     double s13 = std::sin(theta13);
@@ -735,7 +729,7 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
  * @param anti true=antineutrino, false=neutrino.
  * @return double 
  */
-double m_m_Survival_Prob(std::vector<double> consts, double rho, double E, double L) {
+double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, double L) {
     // convert units to eV
     E *= 1e6; //(MeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
