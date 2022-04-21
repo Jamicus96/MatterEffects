@@ -61,7 +61,6 @@ double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
 
 // Extra constants
 double PHASE = (2.0/3.0) * M_PI;
-double FACTOR = (2.0 / sqrt(3.0));
 
 
 /* ---------------------------- */
@@ -274,8 +273,8 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
     std::vector<double> vals;
 
     // scalar values
-    vals.push_back((2.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // -a0
-    vals.push_back((1.0/3.0) * (m21*m21 + m31*m31 - m21 * m31));  // -a1
+    vals.push_back((1.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/18.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    vals.push_back((1.0/9.0) * (m21*m21 + m31*m31 - m21 * m31));  // a1
 
     /* ------------------------ */
 
@@ -388,8 +387,8 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double A_CC = anti * 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
 
         // Correct constants for matter effects (D = 0 for transition prob)
-        a0 += Y_ee * A_CC + (1.0/3.0) * H_ee * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC; // -a0
-        a1 += H_ee * A_CC + (1.0/3.0) * A_CC*A_CC; // -a1
+        a0 += 0.5 * Y_ee * A_CC + (1.0/6.0) * H_ee * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // a0
+        a1 += (1.0/3.0) * H_ee * A_CC + (1.0/9.0) * A_CC*A_CC; // a1
         Y_r += A_CC * T_r;
 
         if (init_flavour == final_flavour) {
@@ -402,8 +401,8 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
 
     // Different cases for survival and transition probabilities
     double P;
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
-    double preFact = FACTOR * sqrt(a1);
+    double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
+    double preFact = 2.0 * sqrt(a1);
 
     if (init_flavour == final_flavour) {
         // Get eigenvalues of H, and constants X
@@ -411,7 +410,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double X[3];
         for(int i=0; i<3; ++i){
             eigen[i] = preFact * cos(arcCos - PHASE * i);
-            X[i] = (1.0/3.0) + (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] - a1);
+            X[i] = 1.0 + (eigen[i] * H_r + Y_r) / (eigen[i]*eigen[i] - a1);
         }
 
         double s2_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
@@ -419,7 +418,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double s2_21 = sin(((eigen[2] - eigen[1]) * L) / (4.0 * E));
 
         // Compute probability
-        P = 1.0 - 4.0 * (X[1]*X[0]*s2_10*s2_10 + X[2]*X[0]*s2_20*s2_20 + X[2]*X[1]*s2_21*s2_21);
+        P = 1.0 - (4.0/9.0) * (X[1]*X[0]*s2_10*s2_10 + X[2]*X[0]*s2_20*s2_20 + X[2]*X[1]*s2_21*s2_21);
 
     } else {
         // Get eigenvalues of H, and constants X
@@ -427,9 +426,9 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double R_X[3];
         double I_X[3];
         for(int i=0; i<3; ++i){
-            eigen[i] = preFact * cos(arcCos - (2.0 * M_PI * i) / 3.0);
-            R_X[i] = (eigen[i] * H_r + Y_r) / (3.0 * eigen[i]*eigen[i] - a1);
-            I_X[i] = (eigen[i] * H_i + Y_i) / (3.0 * eigen[i]*eigen[i] - a1);
+            eigen[i] = preFact * cos(arcCos - PHASE * i);
+            R_X[i] = (eigen[i] * H_r + Y_r) / (eigen[i]*eigen[i] - a1);
+            I_X[i] = (eigen[i] * H_i + Y_i) / (eigen[i]*eigen[i] - a1);
         }
 
         double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
@@ -444,12 +443,12 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
         double s_21 = sin(Theta_21);
 
         // Compute probability
-        P  =        - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
-                           + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
-                           + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
-             + anti * 2.0 * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
-                           + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
-                           + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21);
+        P  = (2.0/9.0) * (- 2.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
+                                 + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
+                                 + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
+                         + anti * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
+                                 + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
+                                 + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21));
 
     }
 
@@ -565,8 +564,8 @@ std::vector<double> e_e_Survival_Prob_Constants() {
 
     // Compute vacuum constants
     std::vector<double> consts;
-    consts.push_back((2.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
-    consts.push_back((1.0/3.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
+    consts.push_back((1.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/18.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    consts.push_back((1.0/9.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
     consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
     consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
                                     + m31*m31 * (s13*s13 - (1.0/3.0))
@@ -591,8 +590,8 @@ std::vector<double> mu_mu_Survival_Prob_Constants() {
 
     // Compute vacuum constants
     std::vector<double> consts;
-    consts.push_back((2.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
-    consts.push_back((1.0/3.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
+    consts.push_back((1.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/18.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    consts.push_back((1.0/9.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
     consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
     consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
                                 + m31*m31 * (s13*s13 - (1.0/3.0))
@@ -627,8 +626,8 @@ std::vector<double> mu_e_Transition_Prob_Constants() {
 
     // Compute vacuum constants
     std::vector<double> consts;
-    consts.push_back((2.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/9.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
-    consts.push_back((1.0/3.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
+    consts.push_back((1.0/27.0) * (m21*m21*m21 + m31*m31*m31) - (1.0/18.0) * (m21*m21 * m31 + m21 * m31*m31)); // a0
+    consts.push_back((1.0/9.0) * (m21*m21 + m31*m31 - m21 * m31)); // a1
     consts.push_back(m21 * (s12*s12 * c13*c13 - (1.0/3.0)) + m31 * (s13*s13 - (1.0/3.0))); // H_ee
     consts.push_back((1.0/3.0) * (m21*m21 * (s12*s12 * c13*c13 - (1.0/3.0))
                                     + m31*m31 * (s13*s13 - (1.0/3.0))
@@ -678,18 +677,18 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
     // Initialise constants with vacuum values
     double a0 = consts.at(0);
     double a1 = consts.at(1);
-    double H = consts.at(2);
-    double Y = consts.at(3);
+    double H_ee = consts.at(2);
+    double Y_ee = consts.at(3);
 
     // If not vacuum, make corrections
     if(rho != 0.0){
         double A_CC = -2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
         // Compute new values for H_ee, Y, a0 and a1 (make sure and Y are updated after their use by others)
-        double alpha_1 = H * A_CC + (1.0/3.0) * A_CC*A_CC;
-        a0 += Y * A_CC + (1.0/3.0) * H * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC; // -a0
-        a1 += alpha_1; // -a1
-        Y += (2.0/3.0) * alpha_1;
-        H += (2.0/3.0) * A_CC;
+        double alpha_1 = (1.0/3.0) * H_ee * A_CC + (1.0/9.0) * A_CC*A_CC;
+        a0 += 0.5 * Y_ee * A_CC + (1.0/6.0) * H_ee * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // a0
+        a1 += alpha_1; // a1
+        Y_ee += 2.0 * alpha_1;
+        H_ee += (2.0/3.0) * A_CC;
     }
 
 
@@ -697,12 +696,12 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
-    double preFact = FACTOR * sqrt(a1);
+    double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
+    double preFact = 2.0 * sqrt(a1);
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
-        X[i] = (1.0/3.0) + (eigen[i] * H + Y) / (3.0 * eigen[i]*eigen[i] - a1);
+        X[i] = 1.0 + (eigen[i] * H_ee + Y_ee) / (eigen[i]*eigen[i] - a1);
     }
 
     double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
@@ -711,7 +710,7 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
 
 
     // Compute probability
-    return 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
+    return 1.0 - (4.0/9.0) * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
 }
 
 /**
@@ -740,8 +739,8 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
     if(rho != 0.0){
         double A_CC = 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
         // Compute new values for H_mm, Y_mm, a0 and a1
-        a0 += consts.at(3) * A_CC + (1.0/3.0) * consts.at(2) * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC; // -a0
-        a1 += consts.at(2) * A_CC + (1.0/3.0) * A_CC*A_CC; // -a1
+        a0 += 0.5 * consts.at(3) * A_CC + (1.0/6.0) * consts.at(2) * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // a0
+        a1 += (1.0/3.0) * consts.at(2) * A_CC + (1.0/9.0) * A_CC*A_CC; // a1
         Y_mm -= (2.0/3.0) * (consts.at(2) + H_mm) * A_CC + (1.0/9.0) * A_CC*A_CC;
         H_mm -= (1.0/3.0) * A_CC;
     }
@@ -751,12 +750,12 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
     double eigen[3];
     double X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
-    double preFact = FACTOR * sqrt(a1);
+    double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
+    double preFact = 2.0 * sqrt(a1);
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
-        X[i] = (1.0/3.0) + (eigen[i] * H_mm + Y_mm) / (3.0 * eigen[i]*eigen[i] - a1);
+        X[i] = 1.0 + (eigen[i] * H_mm + Y_mm) / (eigen[i]*eigen[i] - a1);
     }
 
     double s_10 = sin(((eigen[1] - eigen[0]) * L) / (4.0 * E));
@@ -765,7 +764,7 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
 
 
     // Compute probability
-    return 1.0 - 4.0 * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
+    return 1.0 - (4.0/9.0) * (X[1]*X[0]*s_10*s_10 + X[2]*X[0]*s_20*s_20 + X[2]*X[1]*s_21*s_21);
 }
 
 /**
@@ -797,8 +796,8 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     if(rho != 0.0){
         double A_CC = 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
         // Compute new values for a0 and a1
-        a0 += consts.at(3) * A_CC + (1.0/3.0) * consts.at(2) * A_CC*A_CC + (2.0/27.0) * A_CC*A_CC*A_CC; // -a0
-        a1 += consts.at(2) * A_CC + (1.0/3.0) * A_CC*A_CC; // -a1
+        a0 += 0.5 * consts.at(3) * A_CC + (1.0/6.0) * consts.at(2) * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // -a0
+        a1 += (1.0/3.0) * consts.at(2) * A_CC + (1.0/9.0) * A_CC*A_CC; // -a1
     }
 
     // Get eigenvalues of H, and constants X and theta
@@ -806,13 +805,13 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     double R_X[3];
     double I_X[3];
 
-    double arcCos = (1.0/3.0) * acos((3.0 * a0) / (FACTOR * sqrt(a1) * a1));
-    double preFact = FACTOR * sqrt(a1);
+    double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
+    double preFact = 2.0 * sqrt(a1);
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
-        R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (3.0 * eigen[i]*eigen[i] - a1);
-        I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (3.0 * eigen[i]*eigen[i] - a1);
+        R_X[i] = ((eigen[i] + (A_CC / 3.0)) * R_H_em + R_Y_em) / (eigen[i]*eigen[i] - a1);
+        I_X[i] = ((eigen[i] + (A_CC / 3.0)) * I_H_em + I_Y_em) / (eigen[i]*eigen[i] - a1);
     }
 
     double Theta_10 = ((eigen[1] - eigen[0]) * L) / (2.0 * E);
@@ -827,10 +826,10 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     double s_21 = sin(Theta_21);
 
     // Compute probability
-    return - 4.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
-                  + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
-                  + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
-           + 2.0 * ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
-                  + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
-                  + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21);
+    return (2.0/9.0) * (- 2.0 * ((R_X[1]*R_X[0] + I_X[1]*I_X[0]) * s2_10*s2_10
+                               + (R_X[2]*R_X[0] + I_X[2]*I_X[0]) * s2_20*s2_20
+                               + (R_X[2]*R_X[1] + I_X[2]*I_X[1]) * s2_21*s2_21)
+                              + ((I_X[1]*R_X[0] - R_X[1]*I_X[0]) * s_10
+                               + (I_X[2]*R_X[0] - R_X[2]*I_X[0]) * s_20
+                               + (I_X[2]*R_X[1] - R_X[2]*I_X[1]) * s_21));
 }
