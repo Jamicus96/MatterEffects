@@ -796,8 +796,8 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
     if(rho != 0.0){
         double A_CC = 2.0 * E * GLB_V_FACTOR_ * GLB_Ne_MANTLE_ * rho; // (eV^2)
         // Compute new values for a0 and a1
-        a0 += 0.5 * consts.at(3) * A_CC + (1.0/6.0) * consts.at(2) * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // -a0
-        a1 += (1.0/3.0) * consts.at(2) * A_CC + (1.0/9.0) * A_CC*A_CC; // -a1
+        a0 += 0.5 * consts.at(3) * A_CC + (1.0/6.0) * consts.at(2) * A_CC*A_CC + (1.0/27.0) * A_CC*A_CC*A_CC; // a0
+        a1 += (1.0/3.0) * consts.at(2) * A_CC + (1.0/9.0) * A_CC*A_CC; // a1
     }
 
     // Get eigenvalues of H, and constants X and theta
