@@ -36,6 +36,9 @@ double anti_e_e_Survival_Prob(const std::vector<double>& consts, double rho, dou
 double mu_mu_Survival_Prob(const std::vector<double>& consts, double rho, double E, double L);
 double mu_e_Transition_Prob(const std::vector<double>& consts, double rho, double E, double L);
 
+// Other funcstions
+std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int n_args_wanted);
+
                 /* ---------------------------- */
                 /* ----- Global variables ----- */
                 /* ---------------------------- */
@@ -66,13 +69,16 @@ const double m31 = 0.0025283;                       // (Delta m_31^2, in eV^2)
 
 int main(int argc, char *argv[]) {
     // Read in arguments
-    std::vector<std::vector<double> > input_data = read_args(argc, argv, 16);
+    std::vector<std::vector<double> > input_data = read_args(argc, argv, 17);
+    std::cout << "Reading last 3 args" << std::endl;
     int init_flavour = atoi(argv[13]); // 0=e, 1=mu, 2=tau
     int final_flavour = atoi(argv[14]); // 0=e, 1=mu, 2=tau
     int anti = atoi(argv[15]); // -1 = antineutrino, 1 = neutrino
     std::string output_file_address = argv[16];
 
     /* ---------------------------------------------------------- */
+
+    std::cout << "Setting up constants..." << std::endl;
 
     // Compute PMNS matrix (kinda part of my initialisation, unless I use the mixing angles directly,
     // which I would definitely for one harcoded flavour transition)
@@ -95,6 +101,8 @@ int main(int argc, char *argv[]) {
 
     /* ---------------------------------------------------------- */
 
+    std::cout << "Running oscillation functions..." << std::endl;
+
     // Set up data saving
     std::vector<double> P, P_vac, P_globes, P_vac_globes, P_specific;
     std::vector<long double> time_P, time_P_vac, time_P_globes, time_P_vac_globes, time_P_specific;
@@ -102,7 +110,7 @@ int main(int argc, char *argv[]) {
     unsigned int N = input_data.size();
 
     double P_temp, L, E, rho;
-    for (unsigned int i = 0; i < N+1; ++i) {
+    for (unsigned int i = 0; i < N; ++i) {
         // Unpack input data
         L = input_data.at(i).at(0);
         E = input_data.at(i).at(1);
@@ -145,7 +153,7 @@ int main(int argc, char *argv[]) {
 
 
     if (init_flavour == 0 && final_flavour == 0 && anti == -1) {
-        for (unsigned int i = 0; i < N+1; ++i) {
+        for (unsigned int i = 0; i < N; ++i) {
             // Run oscillation function
             c_start = clock();
             P_temp = anti_e_e_Survival_Prob(consts_e_e, rho, E, L);
@@ -156,7 +164,7 @@ int main(int argc, char *argv[]) {
         }
     } else if (init_flavour == 1 && anti == 1) {
         if (final_flavour == 1) {
-            for (unsigned int i = 0; i < N+1; ++i) {
+            for (unsigned int i = 0; i < N; ++i) {
                 // Run oscillation function
                 c_start = clock();
                 P_temp = mu_mu_Survival_Prob(consts_m_m, rho, E, L);
@@ -166,7 +174,7 @@ int main(int argc, char *argv[]) {
                 time_P_specific.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
             }
         } else if (final_flavour == 0) {
-            for (unsigned int i = 0; i < N+1; ++i) {
+            for (unsigned int i = 0; i < N; ++i) {
                 // Run oscillation function
                 c_start = clock();
                 P_temp = mu_e_Transition_Prob(consts_m_e, rho, E, L);
@@ -182,16 +190,16 @@ int main(int argc, char *argv[]) {
 
     // Open file to print results to
     std::ofstream datafile;
-    datafile.open(output_file_address, std::ios::app);
+    datafile.open(output_file_address, std::ofstream::out | std::ofstream::trunc);
 
     // Print results to file
-    for (unsigned int i = 0; i < N+1; ++i) {
+    for (unsigned int i = 0; i < N; ++i) {
         // Unpack input data
         L = input_data.at(i).at(0);
         E = input_data.at(i).at(1);
         rho = input_data.at(i).at(2);
 
-        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L << " "
+        datafile << anti << " " << init_flavour << " " << final_flavour << " " << L << " " << E << " " << rho << " "
         << P.at(i) << " " << time_P.at(i) << " "
         << P_vac.at(i) << " " << time_P_vac.at(i) << " "
         << P_globes.at(i) << " " << time_P_globes.at(i) << " "
@@ -217,6 +225,8 @@ int main(int argc, char *argv[]) {
  * @return std::vector<std::vector<double> > = {{L_0, E_0, rho_0}, {L_1, E_1, rho_1}, ..., {L_n, E_n, rho_n}}
  */
 std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int n_args_wanted) {
+    std::cout << "Running read_args()" << std::endl;
+
     // Read in arguments
     if (argc != n_args_wanted) {
         std::cout << "Need " << n_args_wanted << " arguments, not " << argc << std::endl;
@@ -242,12 +252,14 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
         exit(1);
     }
 
+    std::cout << "Setting up steps" << std::endl;
+
     std::vector<double> L_steps, E_steps, rho_steps;
     double L_n_max = log(L_max - L_min + 1.0);
     double E_n_max = log(E_max - E_min + 1.0);
     double rho_n_max = log(rho_max - rho_min + 1.0);
     double n;
-    for (unsigned int i = 0; i < L_N; ++i) {
+    for (unsigned int i = 0; i < L_N + 1; ++i) {
         if (L_log) {
             n = i * (L_n_max / L_N);
             L_steps.push_back(L_min + pow(10.0, n) - 1.0);
@@ -255,14 +267,14 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
             L_steps.push_back(L_min + i * ((L_max - L_min) / L_N));
         }
     }
-    for (unsigned int i = 0; i < E_N; ++i) {
+    for (unsigned int i = 0; i < E_N + 1; ++i) {
         if (E_log) {
             E_steps.push_back(E_min + 0);
         } else {
-            L_steps.push_back(E_min + i * ((E_max - E_min) / E_N));
+            E_steps.push_back(E_min + i * ((E_max - E_min) / E_N));
         }
     }
-    for (unsigned int i = 0; i < rho_N; ++i) {
+    for (unsigned int i = 0; i < rho_N + 1; ++i) {
         if (rho_log) {
             rho_steps.push_back(rho_min + 0);
         } else {
@@ -270,17 +282,13 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
         }
     }
 
+    std::cout << "Writing steps to intput_info vector or vectors" << std::endl;
+
     std::vector<std::vector<double> > input_data;
-    double L = L_min;
-    double E = E_min;
-    double rho = rho_min;
-    for (unsigned int i = 0; i < L_N; ++i) {
-        L = L_steps.at(i);
-        for (unsigned int j = 0; j < E_N; ++j) {
-            E = E_steps.at(j);
-            for (unsigned int k = 0; k < rho_N; ++k) {
-                rho = rho_steps.at(k);
-                std::vector<double> line_data = {L, E, rho};
+    for (unsigned int i = 0; i < L_N + 1; ++i) {
+        for (unsigned int j = 0; j < E_N + 1; ++j) {
+            for (unsigned int k = 0; k < rho_N + 1; ++k) {
+                std::vector<double> line_data = {L_steps.at(i), E_steps.at(j), rho_steps.at(k)};
                 input_data.push_back(line_data);
             }
         }
