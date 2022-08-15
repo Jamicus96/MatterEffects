@@ -96,24 +96,12 @@ int main(int argc, char *argv[]) {
     /* ---------------------------------------------------------- */
 
     // Set up data saving
-    std::vector<double> P;
-    std::vector<long double> time_P;
-    std::vector<double> P_vac;
-    std::vector<long double> time_P_vac;
-    std::vector<double> P_globes;
-    std::vector<long double> time_P_globes;
-    std::vector<double> P_vac_globes;
-    std::vector<long double> time_P_vac_globes;
-    std::vector<double> P_specific;
-    std::vector<long double> time_P_specific;
-    clock_t c_start;
-    clock_t c_end;
+    std::vector<double> P, P_vac, P_globes, P_vac_globes, P_specific;
+    std::vector<long double> time_P, time_P_vac, time_P_globes, time_P_vac_globes, time_P_specific;
+    clock_t c_start, c_end;
     unsigned int N = input_data.size();
 
-    double P_temp;
-    double L;
-    double E;
-    double rho;
+    double P_temp, L, E, rho;
     for (unsigned int i = 0; i < N+1; ++i) {
         // Unpack input data
         L = input_data.at(i).at(0);
@@ -248,24 +236,50 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
     int rho_N = atoi(argv[11]); // number of data points between rho_min and rho_max
     bool rho_log = atoi(argv[12]);
 
+    // Set up input data
     if (L_N < 0 || E_N < 0 || rho_N < 0) {
         std::cout << "Number of datapoints E_N, rho_N and L_N must be at least 0, not " << E_N << ", " << rho_N << ", " << L_N << std::endl;
         exit(1);
     }
-    double L_step = (L_max - L_min) / L_N;
-    double E_step = (E_max - E_min) / E_N;
-    double rho_step = (rho_max - rho_min) / rho_N;
+
+    std::vector<double> L_steps, E_steps, rho_steps;
+    double L_n_max = log(L_max - L_min + 1.0);
+    double E_n_max = log(E_max - E_min + 1.0);
+    double rho_n_max = log(rho_max - rho_min + 1.0);
+    double n;
+    for (unsigned int i = 0; i < L_N; ++i) {
+        if (L_log) {
+            n = i * (L_n_max / L_N);
+            L_steps.push_back(L_min + pow(10.0, n) - 1.0);
+        } else {
+            L_steps.push_back(L_min + i * ((L_max - L_min) / L_N));
+        }
+    }
+    for (unsigned int i = 0; i < E_N; ++i) {
+        if (E_log) {
+            E_steps.push_back(E_min + 0);
+        } else {
+            L_steps.push_back(E_min + i * ((E_max - E_min) / E_N));
+        }
+    }
+    for (unsigned int i = 0; i < rho_N; ++i) {
+        if (rho_log) {
+            rho_steps.push_back(rho_min + 0);
+        } else {
+            rho_steps.push_back(rho_min + i * ((rho_max - rho_min) / rho_N));
+        }
+    }
 
     std::vector<std::vector<double> > input_data;
     double L = L_min;
     double E = E_min;
     double rho = rho_min;
     for (unsigned int i = 0; i < L_N; ++i) {
-        L += L_step;
+        L = L_steps.at(i);
         for (unsigned int j = 0; j < E_N; ++j) {
-            E += E_step;
+            E = E_steps.at(j);
             for (unsigned int k = 0; k < rho_N; ++k) {
-                rho += rho_step;
+                rho = rho_steps.at(k);
                 std::vector<double> line_data = {L, E, rho};
                 input_data.push_back(line_data);
             }
