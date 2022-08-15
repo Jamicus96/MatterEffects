@@ -16,67 +16,61 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
-#include <ctime>
+#include <time.h>
 #include <globes/globes.h>
 
 
 // General flavour functions
-double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
+double Oscillation_Prob(const std::vector<double>& consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti);
-double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PMNS, double L, double E,
+double Oscillation_Prob_Vac(const std::vector<std::vector<std::vector<double> > >& U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti);
 std::vector<std::vector<std::vector<double> > > calculate_PMNS();
-std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour);
+std::vector<double> compute_constants(const std::vector<std::vector<std::vector<double> > >& U_PMNS, int init_flavour,int final_flavour);
 
 // Specific flavour functions
 std::vector<double> e_e_Survival_Prob_Constants();
 std::vector<double> mu_mu_Survival_Prob_Constants();
 std::vector<double> mu_e_Transition_Prob_Constants();
-double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
-double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, double L);
-double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, double L);
+double anti_e_e_Survival_Prob(const std::vector<double>& consts, double rho, double E, double L);
+double mu_mu_Survival_Prob(const std::vector<double>& consts, double rho, double E, double L);
+double mu_e_Transition_Prob(const std::vector<double>& consts, double rho, double E, double L);
 
-/* ---------------------------- */
-/* ----- Global variables ----- */
-/* ---------------------------- */
+                /* ---------------------------- */
+                /* ----- Global variables ----- */
+                /* ---------------------------- */
 
 // Conversion from km to eV^-1 (from hbar = 6.58211957e-16 eV.s, c = 299792458 m/s)
 // double L_FACTOR = 5.06773e+09;
 
 // Convert matter density (g/cm^3) to matter potential (eV)
 // by multiplying by these factors (from GLOBES-3.0.11/src/glb_probability.h):
-double GLB_V_FACTOR_ = 7.5e-14;   /* Conversion factor for matter potentials */
-double GLB_Ne_MANTLE_ = 0.5;     /* Effective electron numbers for calculation */
+const double GLB_V_FACTOR_ = 7.5e-14;   /* Conversion factor for matter potentials */
+const double GLB_Ne_MANTLE_ = 0.5;     /* Effective electron numbers for calculation */
 // eV to km conversion (also from GLoBES: GLOBES-3.0.11/globes/globes.h):
-double GLB_EV_TO_KM_FACTOR_ = 1.9747235e-10;
+const double GLB_EV_TO_KM_FACTOR_ = 1.9747235e-10;
 
 // Oscillation constants
-double theta12 = std::asin(sqrt(0.307));
-double theta13 = std::asin(sqrt(2.18e-2));
-double theta23 = std::asin(sqrt(0.545));     // Normal Hierarchy
-// double theta23 = np.arcsin(np.sqrt(0.547));  // Inverted Hierarchy
-double delta = 1.36 * M_PI;                     // Not sure about the hierarchy (NH I think here)
-double m21 = 7.53e-5;                           // (Delta m_21^2, in eV^2)
-double m31 = 0.0025283;                         // (Delta m_31^2, in eV^2)
-
-// Extra constants
-double PHASE = (2.0/3.0) * M_PI;
+const double theta12 = std::asin(sqrt(0.307));
+const double theta13 = std::asin(sqrt(2.18e-2));
+const double theta23 = std::asin(sqrt(0.545));      // Normal Hierarchy
+// const double theta23 = std::asin(sqrt(0.547));      // Inverted Hierarchy
+const double delta = 1.36 * M_PI;                   // Not sure about the hierarchy (NH I think here)
+const double m21 = 7.53e-5;                         // (Delta m_21^2, in eV^2)
+const double m31 = 0.0025283;                       // (Delta m_31^2, in eV^2)
 
 
-/* ---------------------------- */
-/* ------ Main Functions ------ */
-/* ---------------------------- */
+                /* ---------------------------- */
+                /* ------ Main Functions ------ */
+                /* ---------------------------- */
 
 int main(int argc, char *argv[]) {
     // Read in arguments
-    double E = atof(argv[1]); // MeV
-    double rho = atof(argv[2]); // g/cm^3
-    double L_min = atof(argv[3]); // km
-    double L_max = atof(argv[4]); // km
-    int N = atof(argv[5]); // number of data points between L_min and L_max
-    int init_flavour = atoi(argv[6]); // 0=e, 1=mu, 2=tau
-    int final_flavour = atoi(argv[7]); // 0=e, 1=mu, 2=tau
-    int anti = atoi(argv[8]); // -1 = antineutrino, 1 = neutrino
+    std::vector<std::vector<double> > input_data = read_args(argc, argv, 16);
+    int init_flavour = atoi(argv[13]); // 0=e, 1=mu, 2=tau
+    int final_flavour = atoi(argv[14]); // 0=e, 1=mu, 2=tau
+    int anti = atoi(argv[15]); // -1 = antineutrino, 1 = neutrino
+    std::string output_file_address = argv[16];
 
     /* ---------------------------------------------------------- */
 
@@ -101,125 +95,185 @@ int main(int argc, char *argv[]) {
 
     /* ---------------------------------------------------------- */
 
-    // Open file to print results to
-    std::ofstream datafile;
-    datafile.open("results.txt", std::ios::app);
-
-    // Compute oscillation probabilities via various methods, for various baselines
-    // And record calculation time
-    if (N < 0) {
-        std::cout << "Number of datapoints N must be at least 0, not " << N << std::cout;
-    }
-    double L_step = 0.0;
-    if (N > 0) {L_step = (L_max - L_min) / N;}
-    double L = L_min;
+    // Set up data saving
     std::vector<double> P;
+    std::vector<long double> time_P;
     std::vector<double> P_vac;
+    std::vector<long double> time_P_vac;
     std::vector<double> P_globes;
+    std::vector<long double> time_P_globes;
     std::vector<double> P_vac_globes;
-
-    std::clock_t c_start = std::clock();
-    for (unsigned int i = 0; i < N+1; ++i) {
-        P.push_back(Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti));
-        // Step baseline forward
-        L += L_step;
-    }
-    std::clock_t c_end = std::clock();
-    long double time_P = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-    L = L_min;
-    c_start = std::clock();
-    for (unsigned int i = 0; i < N+1; ++i) {
-        P_vac.push_back(Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti));
-        // Step baseline forward
-        L += L_step;
-    }
-    c_end = std::clock();
-    long double time_P_vac = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-    L = L_min;
-    c_start = std::clock();
-    for (unsigned int i = 0; i < N+1; ++i) {
-        P_globes.push_back(glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L, rho));   // flavours + 1 to mine, and energy in GeV
-        // Step baseline forward
-        L += L_step;
-    }
-    c_end = std::clock();
-    long double time_P_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-    L = L_min;
-    c_start = std::clock();
-    for (unsigned int i = 0; i < N+1; ++i) {
-        P_vac_globes.push_back(glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E * 1e-3, L));             // flavours + 1 to mine, and energy in GeV
-        // Step baseline forward
-        L += L_step; 
-    }
-    c_end = std::clock();
-    long double time_P_vac_globes = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-
-    /* ---------------------------------------------------------- */
-
-    // Flavour specific transitions
-    bool specific = false;
+    std::vector<long double> time_P_vac_globes;
     std::vector<double> P_specific;
-    L = L_min;
+    std::vector<long double> time_P_specific;
+    clock_t c_start;
+    clock_t c_end;
+    unsigned int N = input_data.size();
+
+    double P_temp;
+    double L;
+    double E;
+    double rho;
+    for (unsigned int i = 0; i < N+1; ++i) {
+        // Unpack input data
+        L = input_data.at(i).at(0);
+        E = input_data.at(i).at(1);
+        rho = input_data.at(i).at(2);
+
+        // Run oscillation function
+        c_start = clock();
+        P_temp = Oscillation_Prob(consts, L, E, rho, init_flavour, final_flavour, anti);
+        c_end = clock();
+        // Record info
+        P.push_back(P_temp);
+        time_P.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
+        
+        // Run oscillation function
+        c_start = clock();
+        P_temp = Oscillation_Prob_Vac(U_PMNS, L, E, init_flavour, final_flavour, anti);
+        c_end = clock();
+        // Record info
+        P_vac.push_back(P_temp);
+        time_P_vac.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
+        
+        // Run oscillation function
+        c_start = clock();
+        P_temp = glbConstantDensityProbability(init_flavour + 1, final_flavour + 1, anti, E, L, rho);  // flavours + 1 to mine, and energy in GeV
+        c_end = clock();
+        // Record info
+        P_globes.push_back(P_temp);
+        time_P_globes.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
+        
+        // Run oscillation function
+        c_start = clock();
+        P_temp = glbVacuumProbability(init_flavour + 1, final_flavour + 1, anti, E, L);  // flavours + 1 to mine, and energy in GeV
+        c_end = clock();
+        // Record info
+        P_vac_globes.push_back(P_temp);
+        time_P_vac_globes.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
+    }
+
+        /* ---------------------------------------------------------- */
+
+
     if (init_flavour == 0 && final_flavour == 0 && anti == -1) {
-        specific = true;
-        c_start = std::clock();
         for (unsigned int i = 0; i < N+1; ++i) {
-            P_specific.push_back(anti_e_e_Survival_Prob(consts_e_e, rho, E, L));
-            // Step baseline forward
-            L += L_step; 
+            // Run oscillation function
+            c_start = clock();
+            P_temp = anti_e_e_Survival_Prob(consts_e_e, rho, E, L);
+            c_end = clock();
+            // Record info
+            P_specific.push_back(P_temp);
+            time_P_specific.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
         }
-        c_end = std::clock();
     } else if (init_flavour == 1 && anti == 1) {
         if (final_flavour == 1) {
-            specific = true;
-            c_start = std::clock();
             for (unsigned int i = 0; i < N+1; ++i) {
-                P_specific.push_back(mu_mu_Survival_Prob(consts_m_m, rho, E, L));
-                // Step baseline forward
-                L += L_step; 
+                // Run oscillation function
+                c_start = clock();
+                P_temp = mu_mu_Survival_Prob(consts_m_m, rho, E, L);
+                c_end = clock();
+                // Record info
+                P_specific.push_back(P_temp);
+                time_P_specific.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
             }
-            c_end = std::clock();
         } else if (final_flavour == 0) {
-            specific = true;
-            c_start = std::clock();
             for (unsigned int i = 0; i < N+1; ++i) {
-                P_specific.push_back(mu_e_Transition_Prob(consts_m_e, rho, E, L));
-                // Step baseline forward
-                L += L_step; 
+                // Run oscillation function
+                c_start = clock();
+                P_temp = mu_e_Transition_Prob(consts_m_e, rho, E, L);
+                c_end = clock();
+                // Record info
+                P_specific.push_back(P_temp);
+                time_P_specific.push_back(1000.0 * (c_end - c_start) / CLOCKS_PER_SEC);
             }
-            c_end = std::clock();
         }
     }
-    long double time_P_specific = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 
     /* ---------------------------------------------------------- */
 
+    // Open file to print results to
+    std::ofstream datafile;
+    datafile.open(output_file_address, std::ios::app);
+
     // Print results to file
-    L = L_min;
     for (unsigned int i = 0; i < N+1; ++i) {
-        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L
-                 << " " << P.at(i) << " " << P_vac.at(i) << " " << P_globes.at(i) << " " << P_vac_globes.at(i);
+        // Unpack input data
+        L = input_data.at(i).at(0);
+        E = input_data.at(i).at(1);
+        rho = input_data.at(i).at(2);
+
+        datafile << anti << init_flavour << final_flavour << " " << E << " " << rho << " " << L << " "
+        << P.at(i) << " " << time_P.at(i) << " "
+        << P_vac.at(i) << " " << time_P_vac.at(i) << " "
+        << P_globes.at(i) << " " << time_P_globes.at(i) << " "
+        << P_vac_globes.at(i) << " " << time_P_vac_globes.at(i);
                  
-        if (specific) {datafile << " " << P_specific.at(i);}
+        if (P_specific.size() > 0) {
+            datafile << " " << P_specific.at(i) << " " << time_P_specific.at(i);
+        }
         datafile << std::endl;
-
-        // Step baseline forward
-        L += L_step;
-    }
-
-    std::cout << "time_P = " << time_P << " microseconds" << std::endl;
-    std::cout << "time_P_vac = " << time_P_vac << " microseconds" << std::endl;
-    std::cout << "time_P_globes = " << time_P_globes << " microseconds" << std::endl;
-    std::cout << "time_P_vac_globes = " << time_P_vac_globes << " microseconds" << std::endl;
-    if (specific) {
-        std::cout << "time_P_specific = " << time_P_specific << " microseconds" << std::endl;
     }
 
     return 0;
 }
 
 
+/* -------------------- MISCELLANEOUS --------------------- */
 
+/**
+ * @brief Create list of input data to use in oscillation functions
+ * 
+ * @param argc 
+ * @param argv 
+ * @return std::vector<std::vector<double> > = {{L_0, E_0, rho_0}, {L_1, E_1, rho_1}, ..., {L_n, E_n, rho_n}}
+ */
+std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int n_args_wanted) {
+    // Read in arguments
+    if (argc != n_args_wanted) {
+        std::cout << "Need " << n_args_wanted << " arguments, not " << argc << std::endl;
+        exit(1);
+    }
+    
+    double L_min = atof(argv[1]); // km
+    double L_max = atof(argv[2]); // km
+    int L_N = atoi(argv[3]); // number of data points between L_min and L_max
+    bool L_log = atoi(argv[4]);
+    double E_min = atof(argv[5]) * 1e-3; // convert MeV to GeV (for consistency with GLoBES functions)
+    double E_max = atof(argv[6]) * 1e-3; // convert MeV to GeV (for consistency with GLoBES functions)
+    int E_N = atoi(argv[7]); // number of data points between E_min and E_max
+    bool E_log = atoi(argv[8]);
+    double rho_min = atof(argv[9]); // g/cm^3
+    double rho_max = atof(argv[10]); // g/cm^3
+    int rho_N = atoi(argv[11]); // number of data points between rho_min and rho_max
+    bool rho_log = atoi(argv[12]);
+
+    if (L_N < 0 || E_N < 0 || rho_N < 0) {
+        std::cout << "Number of datapoints E_N, rho_N and L_N must be at least 0, not " << E_N << ", " << rho_N << ", " << L_N << std::endl;
+        exit(1);
+    }
+    double L_step = (L_max - L_min) / L_N;
+    double E_step = (E_max - E_min) / E_N;
+    double rho_step = (rho_max - rho_min) / rho_N;
+
+    std::vector<std::vector<double> > input_data;
+    double L = L_min;
+    double E = E_min;
+    double rho = rho_min;
+    for (unsigned int i = 0; i < L_N; ++i) {
+        L += L_step;
+        for (unsigned int j = 0; j < E_N; ++j) {
+            E += E_step;
+            for (unsigned int k = 0; k < rho_N; ++k) {
+                rho += rho_step;
+                std::vector<double> line_data = {L, E, rho};
+                input_data.push_back(line_data);
+            }
+        }
+    }
+
+    return input_data;
+}
 
 
 /* -------------------- PRE-LOOP CONSTANTS ------------------- */
@@ -268,7 +322,7 @@ std::vector<std::vector<std::vector<double> > > calculate_PMNS() {
  * @param final_flavour 
  * @return std::vector<double> = {a0, a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
  */
-std::vector<double> compute_constants(std::vector<std::vector<std::vector<double> > > U_PMNS, int init_flavour,int final_flavour) {
+std::vector<double> compute_constants(const std::vector<std::vector<std::vector<double> > >& U_PMNS, int init_flavour,int final_flavour) {
     // initialise vector
     std::vector<double> vals;
 
@@ -348,14 +402,14 @@ std::vector<double> compute_constants(std::vector<std::vector<std::vector<double
  * 
  * @param consts Pre-computed constants (only depend on oscillation parameters and particular flavour transition).
  * @param L Baseline (km)
- * @param E (anti)neutrino energy (MeV)
+ * @param E (anti)neutrino energy (GeV)
  * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
  * @param init_flavour Initial neutrino flavour (0=e, 1=mu, 2=tau).
  * @param final_flavour Final neutrino flavour (0=e, 1=mu, 2=tau).
  * @param anti 1=neutrino, -1=antineutrino.
  * @return double 
  */
-double Oscillation_Prob(std::vector<double> consts, double L, double E, double rho,
+double Oscillation_Prob(const std::vector<double>& consts, double L, double E, double rho,
                         int init_flavour, int final_flavour, int anti) {
 
     // Check anti value
@@ -365,7 +419,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
     }
 
     // convert units to eV
-    E *= 1e6; //(MeV to eV)
+    E *= 1e9; //(GeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Unpack constants {-a0, -a1, H_ee, Y_ee, H_r, H_i, Y_r, Y_i, D, T_r, T_i}
@@ -403,6 +457,7 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
     double P;
     double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
     double preFact = 2.0 * sqrt(a1);
+    double PHASE = (2.0/3.0) * M_PI;
 
     if (init_flavour == final_flavour) {
         // Get eigenvalues of H, and constants X
@@ -461,17 +516,17 @@ double Oscillation_Prob(std::vector<double> consts, double L, double E, double r
  * @param m21 Mass difference (eV^2).
  * @param m31 Mass difference (eV^2).
  * @param PMNS_values Vector containing PMNS matrix elements.
- * @param L 
- * @param E 
+ * @param L Baseline (km)
+ * @param E (anti)neutrino energy (GeV)
  * @param init_flavour Initial neutrino flavour (0=e, 1=mu, 2=tau).
  * @param final_flavour Final neutrino flavour (0=e, 1=mu, 2=tau).
  * @param anti 1=neutrino, -1=antineutrino.
  * @return double 
  */
-double Oscillation_Prob_Vac(std::vector<std::vector<std::vector<double> > > U_PMNS, double L, double E,
+double Oscillation_Prob_Vac(const std::vector<std::vector<std::vector<double> > >& U_PMNS, double L, double E,
                             int init_flavour, int final_flavour, int anti) {
     // convert all units to eV
-    E *= 1e6; //(MeV to eV)
+    E *= 1e9; //(GeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
 
@@ -664,14 +719,14 @@ std::vector<double> mu_e_Transition_Prob_Constants() {
  * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
  *   constants = = {a0, a1, H_ee, Y_ee}
  * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
- * @param E Antineutrino energy (MeV).
+ * @param E Antineutrino energy (GeV).
  * @param L Baseline (km).
  * @param anti true=antineutrino, false=neutrino.
  * @return double 
  */
-double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, double L) {
+double anti_e_e_Survival_Prob(const std::vector<double>& consts, double rho, double E, double L) {
     // convert units to eV
-    E *= 1e6; //(MeV to eV)
+    E *= 1e9; //(GeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Initialise constants with vacuum values
@@ -698,6 +753,7 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
 
     double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
     double preFact = 2.0 * sqrt(a1);
+    double PHASE = (2.0/3.0) * M_PI;
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
@@ -719,14 +775,14 @@ double anti_e_e_Survival_Prob(std::vector<double> consts, double rho, double E, 
  * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
  *   constants = {a0, a1, H_ee, Y_ee, H_mm, Y_mm}
  * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
- * @param E Antineutrino energy (MeV).
+ * @param E Antineutrino energy (GeV).
  * @param L Baseline (km).
  * @param anti true=antineutrino, false=neutrino.
  * @return double 
  */
-double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, double L) {
+double mu_mu_Survival_Prob(const std::vector<double>& consts, double rho, double E, double L) {
     // convert units to eV
-    E *= 1e6; //(MeV to eV)
+    E *= 1e9; //(GeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Initialise constants with vacuum values
@@ -752,6 +808,7 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
 
     double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
     double preFact = 2.0 * sqrt(a1);
+    double PHASE = (2.0/3.0) * M_PI;
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
@@ -774,13 +831,13 @@ double mu_mu_Survival_Prob(std::vector<double> consts, double rho, double E, dou
  * @param constants Precomputed, independent of neutrino and matter effects, packaged as:
  *   constants = {a0, a1, H_ee, Y_ee, R[H_em], I[H_em], R[Y_em], I[Y_em]}
  * @param rho Matter density (g/cm^3). Use same conversion to matter potential and GLoBES.
- * @param E Neutrino energy (MeV).
+ * @param E Neutrino energy (GeV).
  * @param L Baseline (km).
  * @return double 
  */
-double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, double L) {
+double mu_e_Transition_Prob(const std::vector<double>& consts, double rho, double E, double L) {
     // convert units to eV
-    E *= 1e6; //(MeV to eV)
+    E *= 1e9; //(GeV to eV)
     L /= GLB_EV_TO_KM_FACTOR_; //(km to eV^-1)
 
     // Initialise constants with vacuum values
@@ -807,6 +864,7 @@ double mu_e_Transition_Prob(std::vector<double> consts, double rho, double E, do
 
     double arcCos = (1.0/3.0) * acos(a0 / (sqrt(a1) * a1));
     double preFact = 2.0 * sqrt(a1);
+    double PHASE = (2.0/3.0) * M_PI;
 
     for(int i=0; i<3; ++i){
         eigen[i] = preFact * cos(arcCos - PHASE * i);
