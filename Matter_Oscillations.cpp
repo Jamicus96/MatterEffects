@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
     for (unsigned int i = 0; i < N; ++i) {
         // Unpack input data
         L = input_data.at(i).at(0);
-        E = input_data.at(i).at(1);
+        E = input_data.at(i).at(1) * 1e3;  // Convert back from GeV to MeV to print results
         rho = input_data.at(i).at(2);
 
         datafile << anti << " " << init_flavour << " " << final_flavour << " " << L << " " << E << " " << rho << " "
@@ -237,8 +237,8 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
     double L_max = atof(argv[2]); // km
     int L_N = atoi(argv[3]); // number of data points between L_min and L_max
     bool L_log = atoi(argv[4]);
-    double E_min = atof(argv[5]) * 1e-3; // convert MeV to GeV (for consistency with GLoBES functions)
-    double E_max = atof(argv[6]) * 1e-3; // convert MeV to GeV (for consistency with GLoBES functions)
+    double E_min = atof(argv[5]); // MeV
+    double E_max = atof(argv[6]); // MeV
     int E_N = atoi(argv[7]); // number of data points between E_min and E_max
     bool E_log = atoi(argv[8]);
     double rho_min = atof(argv[9]); // g/cm^3
@@ -248,47 +248,49 @@ std::vector<std::vector<double> > read_args(int argc, char *argv[], unsigned int
 
     // Set up input data
     if (L_N < 0 || E_N < 0 || rho_N < 0) {
-        std::cout << "Number of datapoints E_N, rho_N and L_N must be at least 0, not " << E_N << ", " << rho_N << ", " << L_N << std::endl;
+        std::cout << "Number of datapoints E_N, rho_N and L_N must be at least 0, not " << E_N << ", " << rho_N << " and " << L_N << std::endl;
         exit(1);
     }
 
     std::cout << "Setting up steps" << std::endl;
 
     std::vector<double> L_steps, E_steps, rho_steps;
-    double L_n_max = log(L_max - L_min + 1.0);
-    double E_n_max = log(E_max - E_min + 1.0);
-    double rho_n_max = log(rho_max - rho_min + 1.0);
+    double L_n_max = log10(L_max - L_min + 1.0);
+    double E_n_max = log10(E_max - E_min + 1.0);
+    double rho_n_max = log10(rho_max - rho_min + 1.0);
     double n;
-    for (unsigned int i = 0; i < L_N + 1; ++i) {
+    for (unsigned int i = 0; i < L_N; ++i) {
         if (L_log) {
-            n = i * (L_n_max / L_N);
+            n = i * (L_n_max / (L_N - 1));
             L_steps.push_back(L_min + pow(10.0, n) - 1.0);
         } else {
-            L_steps.push_back(L_min + i * ((L_max - L_min) / L_N));
+            L_steps.push_back(L_min + i * ((L_max - L_min) / (L_N - 1)));
         }
     }
-    for (unsigned int i = 0; i < E_N + 1; ++i) {
+    for (unsigned int i = 0; i < E_N; ++i) {
         if (E_log) {
-            E_steps.push_back(E_min + 0);
+            n = i * (E_n_max / (E_N - 1));
+            E_steps.push_back(E_min + pow(10.0, n) - 1.0);
         } else {
-            E_steps.push_back(E_min + i * ((E_max - E_min) / E_N));
+            E_steps.push_back(E_min + i * ((E_max - E_min) / (E_N - 1)));
         }
     }
-    for (unsigned int i = 0; i < rho_N + 1; ++i) {
+    for (unsigned int i = 0; i < rho_N; ++i) {
         if (rho_log) {
-            rho_steps.push_back(rho_min + 0);
+            n = i * (rho_n_max / (rho_N - 1));
+            rho_steps.push_back(rho_min + pow(10.0, n) - 1.0);
         } else {
-            rho_steps.push_back(rho_min + i * ((rho_max - rho_min) / rho_N));
+            rho_steps.push_back(rho_min + i * ((rho_max - rho_min) / (rho_N - 1)));
         }
     }
 
     std::cout << "Writing steps to intput_info vector or vectors" << std::endl;
 
     std::vector<std::vector<double> > input_data;
-    for (unsigned int i = 0; i < L_N + 1; ++i) {
-        for (unsigned int j = 0; j < E_N + 1; ++j) {
-            for (unsigned int k = 0; k < rho_N + 1; ++k) {
-                std::vector<double> line_data = {L_steps.at(i), E_steps.at(j), rho_steps.at(k)};
+    for (unsigned int i = 0; i < L_N; ++i) {
+        for (unsigned int j = 0; j < E_N; ++j) {
+            for (unsigned int k = 0; k < rho_N; ++k) {
+                std::vector<double> line_data = {L_steps.at(i), E_steps.at(j) * 1e-3, rho_steps.at(k)}; // convert Energy in MeV to GeV (for consistency with GLoBES functions)
                 input_data.push_back(line_data);
             }
         }
