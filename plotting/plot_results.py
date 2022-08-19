@@ -11,12 +11,17 @@ def argparser():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='Run matter effect neutrino oscillation in different modes.')
     parser.add_argument('--file', '-f', type=str, dest='file',
-                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/json/MatOsc_stats.json',
+                        default='/Users/jp643/Documents/Studies/PhD/Antinu/Matter_Effects/Results/MatOsc_stats.json',
                         help='Input file with simulation results.')
     args = parser.parse_args()
 
     return args
         
+def check_match(set_vals, data):
+    for name, val in set_vals:
+        if val != data[name]:
+            return False
+    return True
 
 
 def main():
@@ -29,90 +34,68 @@ def main():
 
     sys_err = 0.01
 
-    L_max = []
-    #E_max = np.zeros(len(data))
-    P_times = []
-    P_times_err = []
+    # Set values
+    set_vals = [("L_min", 0.01),
+                # ("L_N", 100.0),
+                # ("L_log", 0.0),
+                ("E_min", 0.5),
+                # ("E_N", 100.0),
+                # ("E_log", 0.0),
+                ("rho_min", 0.0),
+                # ("rho_N", 100.0),
+                # ("rho_log", 0.0),
+                ("init_flavour", 0.0),
+                ("final_flavour", 0.0),
+                ("anti", -1.0),
+                
+                ("L_max", 1000.0),
+                # ("E_max", 1000.0),
+                ("rho_max", 2.7)
+                ]
+
+    # Ranging values
+    running_vals = [
+                    # ('L_max', [], 'L_max (km)'),
+                    ('E_max', [], 'E_max (MeV)'),
+                    # ('rho_max', [], 'rho_max (g/cm^3)')
+                    ]
+
+    CPU_times = [('time_P', [], [], 'New algorithm, general flavour', 'blue'),
+                ('time_P_specific', [], [], 'New algorithm, specific flavour', 'green'),
+                ('time_P_vac', [], [], 'Vacuum calculation using PMNS matrix', 'red'),
+                ('time_P_globes', [], [], 'GLoBES algorithm', 'yellow'),
+                ('time_P_vac_globes', [], [], 'GLoBES vacuum algorithm', 'orange')]  # (time name, time, time err, plot label, plot colour)
+
+    # Get data wanted
     for key in data:
-        if data[key]['E_max'] == 1000.0:
-            L_max.append(data[key]['L_max'])
-            P_times.append(data[key]['time_P']['<x>'])
-            P_times_err.append(np.sqrt(data[key]['time_P']['std^2'] + sys_err**2))
+        if check_match(set_vals, data[key]):
+            for x_name, x_vals, x_label in running_vals:
+                x_vals.append(data[key][x_name])
+            for name, times, time_errs, label, col in CPU_times:
+                print(name)
+                times.append(data[key][name]['<x>'])
+                time_errs.append(np.sqrt(data[key][name]['std^2'] + sys_err**2))
 
+    # Repackage
+    np_arr_running_vals = []
+    for x_name, x_vals, x_label in running_vals:
+        np_arr_running_vals.append((name, np.array(x_vals), x_label))
+    np_arr_CPU_times = []
+    for name, times, time_errs, label, col in CPU_times:
+        np_arr_CPU_times.append((name, np.array(times), np.array(time_errs), label, col))
     # Plotting
-    # plt.plot(L, Pglobesvac, color='red', label='Vacuum Case (GLoBES)')
-    # plt.plot(L, Pglobes, color='orange', label='With Matter Effects (GLoBES)')
-    # plt.plot(L, Pvac, label='Vacuum Case (my calc)', color='green', linestyle='dashed')
-    plt.plot(L_max, P_times, label='With Matter Effects (my calc)', color='blue', linestyle='dashed')
-    plt.vlines(L_max, P_times - P_times_err, P_times + P_times_err, color='blue')
-    plt.xlabel("L_max (km)")
-    plt.legend(loc='best')
-    # Title = 'Comparing Survival Probability for {}MeV neutrino,\n\
-    #     with Matter Effects (constant density {}g/cm^3) to Vacuum Case'.format(E[0], rho[0])
-    # plt.title(Title)
+    for x_name, x_vals, x_label in np_arr_running_vals:
+        for name, times, time_errs, label, col in np_arr_CPU_times:
+            plt.scatter(x_vals, times, label=label, color=col)
+            plt.vlines(x_vals, times - time_errs, times + time_errs, color=col)
 
-    # # Choose y label (assuming the same for all entries)
-    # init_flavour = init_flavour_lst[0]
-    # final_flavour = final_flavour_lst[0]
-    # if (anti[0] == 1):
-    #     if (init_flavour == 0):
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\nu_e \rightarrow \nu_e$ survival probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\nu_e \rightarrow \nu_\mu$ transition probability')
-    #         else:
-    #             plt.ylabel(r'$\nu_e \rightarrow \nu_\tau$ transition probability')
-    #     elif (init_flavour == 1):
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\nu_\mu \rightarrow \nu_e$ transition probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\nu_\mu \rightarrow \nu_\mu$ survival probability')
-    #         else:
-    #             plt.ylabel(r'$\nu_\mu \rightarrow \nu_\tau$ transition probability')
-    #     else:
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\nu_\tau \rightarrow \nu_e$ transition probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\nu_\tau \rightarrow \nu_\mu$ transition probability')
-    #         else:
-    #             plt.ylabel(r'$\nu_\tau \rightarrow \nu_\tau$ survival probability')
-    # else :
-    #     if (init_flavour == 0):
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_e$ survival probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_\mu$ transition probability')
-    #         else:
-    #             plt.ylabel(r'$\overline{\nu}_e \rightarrow \overline{\nu}_\tau$ transition probability')
-    #     elif (init_flavour == 1):
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_e$ transition probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\mu$ survival probability')
-    #         else:
-    #             plt.ylabel(r'$\overline{\nu}_\mu \rightarrow \overline{\nu}_\tau$ transition probability')
-    #     else:
-    #         if (final_flavour == 0):
-    #             plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_e$ transition probability')
-    #         elif (final_flavour == 1):
-    #             plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\mu$ transition probability')
-    #         else:
-    #             plt.ylabel(r'$\overline{\nu}_\tau \rightarrow \overline{\nu}_\tau$ survival probability')
+        plt.ylabel('Simulation time (s)')
+        plt.xlabel(x_label)
+        plt.legend(loc='best')
+        plt.title('Comparing Speed of Neutrino Oscillation Algorithms')
 
-    plt.show()
+        plt.show()
 
 if __name__ == '__main__':
     main()
 
-
-#  Convert matter density to electron density using 
-#  converstion factors from GLOBES-3.0.11/src/glb_probability.h:
-#  GLB_V_FACTOR        7.5e-14   /* Conversion factor for matter potentials */
-#  GLB_Ne_MANTLE       0.5        /* Effective electron numbers for calculation */
-#  Also note:
-#  V_THRESHOLD 0.001*GLB_V_FACTOR*GLB_Ne_MANTLE  /* The minimum matter potential below which vacuum algorithms are used */
-#  Anyway, used to convert from matter density rho (g/cm^3) to matter potential V (glb_probability.c),
-#  Where: V = sqrt(2)*G_F*N_e, and is given in eV
-
-# Ne = rho / 4.821e-15 #electron density cm^-3
-# Ne *= 1e6 #(cm^-3 to m^3)
