@@ -1,0 +1,46 @@
+#$ -S /bin/bash
+#$ -cwd
+#$ -q smp.q@@EPP
+#$ -j y
+#$ -o /mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/output_log.txt
+##############################################
+
+# Run with: qsub mattOscJob.job
+
+echo "Running Matter Oscillation job script"
+module load sge
+#module load gcc/5.4.0
+# My rat source:
+source /mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/rat_source.sh
+# RAT7 using ROOT5:
+#source /research/epp/neutrino/snoplus/RAT7/env_rat-7.0.5.sh
+# RAT7 using ROOT6
+#source /research/epp/neutrino/snoplus/RAT7/install/env_rat-7.0.5.sh
+cd /mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/
+
+# Set variables
+code_address="/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/MatterEffects/scripts/Matter_Oscillations.exe"
+
+L_min="0.01" # km
+L_max="1000" # km
+L_N="1000" # number of data points between L_min and L_max
+L_log="1"  # 1 = true, 0 = false
+E_min="0.5" # MeV
+E_max="1000" # MeV
+E_N="1000" # number of data points between E_min and E_max
+E_log="1"  # 1 = true, 0 = false
+rho_min="0" # g/cm^3
+rho_max="0" # g/cm^3
+rho_N="1" # number of data points between rho_min and rho_max
+rho_log="1"  # 1 = true, 0 = false
+init_flavour="0" # 0=e, 1=mu, 2=tau
+final_flavour="0" # 0=e, 1=mu, 2=tau
+anti="-1" # -1= antineutrino, 1= neutrino
+output_file_address="/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/test_res.txt"
+print_probs="0"  # 1 = true, 0 = false
+
+# Run command
+$code_address $L_min $L_max $L_N $L_log $E_min $E_max $E_N $E_log $rho_min $rho_max $rho_N $rho_log $init_flavour $final_flavour $anti $output_file_address $print_probs
+
+
+echo "Finished Matter Oscillation job."
