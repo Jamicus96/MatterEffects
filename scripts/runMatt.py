@@ -16,11 +16,11 @@ def argparser():
     parser.add_argument('--example_job', '-ej', type=str, dest='example_job',
                         default='job_scripts/jobArray.job', help='Example job script.')
     parser.add_argument('--info_repo', '-ir', type=str, dest='info_repo',
-                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/job_info/', help='Folder to save job info text files in.')
+                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/e_appearance/job_info/', help='Folder to save job info text files in.')
     parser.add_argument('--stats_repo', '-sr', type=str, dest='stats_repo',
-                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/output_stats/', help='Folder to save timing result text files in.')
+                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/e_appearance/output_stats/', help='Folder to save timing result text files in.')
     parser.add_argument('--json_repo', '-jr', type=str, dest='json_repo',
-                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/json/', help='Folder to save final json stats in.')
+                        default='/mnt/lustre/projects/epp/general/neutrino/jp643/rat_dependent/antinu/Matter_effects/Results/e_appearance/json/', help='Folder to save final json stats in.')
 
     parser.add_argument('--max_jobs', '-m', type=int, dest='max_jobs',
                         default=70, help='Max number of tasks in an array running at any one time.')
@@ -121,13 +121,15 @@ def checkJobsDone(jobName_str, wait_time, verbose):
 ### SIMS FUNCTIONS ###
 
 def setSimVals(save_stats_folder):
+    # Max number of tasks in job: 75000
+    print('Setting Simulation Values')
     # Number of times to repeat the same measurement
-    repeat_measurement = 10
+    repeat_measurement = 50
 
     # Set unchanging values
-    init_flavour = '0'    # 0 = e, 1 = mu, 2 = tau
+    init_flavour = '1'    # 0 = e, 1 = mu, 2 = tau
     final_flavour = '0'   # 0 = e, 1 = mu, 2 = tau
-    anti = '-1'           # -1 =  antineutrino, 1 =  neutrino
+    anti = '1'           # -1 =  antineutrino, 1 =  neutrino
     print_probs = '0'     # 1  =  true, 0  =  false
 
     L_N = '100'           # number of data points between L_min and L_max
@@ -141,19 +143,24 @@ def setSimVals(save_stats_folder):
     rho_min = '0'         # g/cm^3
 
     # Set changing values
-    L_max_list  = np.linspace(0.1, 1000, 10)    # km
-    E_max_list = np.linspace(0.5, 1000, 10)     # MeV
-    rho_max_list = np.linspace(2.7, 2.7, 10)     # g/cm^3
+    L_max_list  = np.linspace(float(L_min), 1000, 10)    # km
+    E_max_list = np.linspace(float(L_min), 1000, 10)     # MeV FIXME: set minima correctly
+    rho_max_list = np.linspace(float(rho_min), 100, 10)     # g/cm^3
 
     info = []
+    print('Starting loop...')
     for L_max in L_max_list:
         L_max = str(L_max)
+        # print(L_max)
         for E_max in E_max_list:
             E_max = str(E_max)
+            # print(E_max)
             for rho_max in rho_max_list:
                 rho_max = str(rho_max)
+                # print(rho_max)
                 for i in range(repeat_measurement):
                     i = str(i)
+                    # print(i)
                     output_file_address = save_stats_folder + 'results_' +  L_min  + '_' +  L_max  + '_' +  L_N  + '_' +  L_log \
                                             + '_' +  E_min  + '_' +  E_max  + '_' +  E_N  + '_' +  E_log \
                                             + '_' +  rho_min  + '_' +  rho_max  + '_' +  rho_N  + '_' +  rho_log \
@@ -180,7 +187,7 @@ def runSims(args):
     save_job_folder = checkRepo(args.info_repo, args.verbose)
     
     ### MAKE JOB SCRIPT TO RUN THE SIMULATIONS ###
-    print('Creatingand job script and info file...')
+    print('Creating job script and info file...')
 
     # Creat info file, tha contains all the commands
     input_info = setSimVals(save_stats_folder)
@@ -191,6 +198,7 @@ def runSims(args):
         command = command_base
         for info in info_line:
             command += ' ' + str(info)
+        # print('writing command:', command)
         commandList_file.write(command + '\n')
     commandList_file.close()
 
@@ -310,11 +318,9 @@ def readStats(args):
 
     # List files in repo
     files = listDir(save_stats_folder)
-    print(files)
 
     # Get all relevent info from file name
     info = getInfo(save_stats_folder, files)
-    print(info)
 
     # Write info to json file
     table = {}
